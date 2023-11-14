@@ -111,6 +111,9 @@
                  <property name="minimum">
                   <number>1</number>
                  </property>
+                 <property name="maximum">
+                  <number>100000</number>
+                 </property>
                 </widget>
                </item>
               </layout>
@@ -125,6 +128,13 @@
                </property>
               </widget>
              </item>
+             <item>
+              <widget class="QPushButton" name="pushButton_ResetGrabber">
+               <property name="text">
+                <string>Reset Grabber</string>
+               </property>
+              </widget>
+             </item>
             </layout>
            </item>
           </layout>
@@ -136,17 +146,34 @@
            <string>Calibration</string>
           </property>
           <layout class="QGridLayout" name="gridLayout_5">
-           <item row="0" column="0">
-            <widget class="QPushButton" name="pushButton">
+           <item row="1" column="1">
+            <widget class="QPushButton" name="pushButton_bright">
+             <property name="text">
+              <string>Bright</string>
+             </property>
+            </widget>
+           </item>
+           <item row="0" column="0" colspan="2">
+            <widget class="QSpinBox" name="spinBox_calibCount">
+             <property name="maximum">
+              <number>100000</number>
+             </property>
+             <property name="value">
+              <number>10</number>
+             </property>
+            </widget>
+           </item>
+           <item row="1" column="0">
+            <widget class="QPushButton" name="pushButton_dark">
              <property name="text">
               <string>Dark</string>
              </property>
             </widget>
            </item>
-           <item row="0" column="1">
-            <widget class="QPushButton" name="pushButton_2">
+           <item row="2" column="0" colspan="2">
+            <widget class="QPushButton" name="pushButton_out">
              <property name="text">
-              <string>Bright</string>
+              <string>Out</string>
              </property>
             </widget>
            </item>
@@ -156,7 +183,7 @@
         <item row="0" column="2">
          <widget class="QGroupBox" name="groupBox_camera">
           <property name="title">
-           <string>Camera</string>
+           <string>Detector Settings</string>
           </property>
           <layout class="QGridLayout" name="gridLayout_3">
            <item row="0" column="0">
@@ -332,12 +359,44 @@
    <slot>setDisabled(bool)</slot>
    <hints>
     <hint type="sourcelabel">
-     <x>133</x>
-     <y>190</y>
+     <x>179</x>
+     <y>148</y>
     </hint>
     <hint type="destinationlabel">
      <x>112</x>
-     <y>137</y>
+     <y>116</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>pushButton_Continuous</sender>
+   <signal>toggled(bool)</signal>
+   <receiver>spinBox_Sequential</receiver>
+   <slot>setDisabled(bool)</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>128</x>
+     <y>148</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>188</x>
+     <y>116</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>pushButton_Continuous</sender>
+   <signal>clicked(bool)</signal>
+   <receiver>pushButton_ResetGrabber</receiver>
+   <slot>setDisabled(bool)</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>127</x>
+     <y>133</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>122</x>
+     <y>161</y>
     </hint>
    </hints>
   </connection>

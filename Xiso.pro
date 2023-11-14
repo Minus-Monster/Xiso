@@ -9,10 +9,13 @@ CONFIG += c++17
 #DEFINES += QT_DISABLE_DEPRECATED_BEFORE=0x060000    # disables all the APIs deprecated before Qt 6.0.0
 
 SOURCES += \
+    CGrabber.cpp \
+    Detector.cpp \
     main.cpp \
     mainwindow.cpp
 
 HEADERS += \
+    CGrabber.h \
     Detector.h \
     mainwindow.h
 
@@ -33,8 +36,8 @@ else: unix:!android: target.path = /opt/$${TARGET}/bin
 #C:\SLDevice\SDK\lib\x64\Release
 #C:\SLDevice\SDK\lib\PleoraLibs\x64
 INCLUDEPATH += "C:/SLDevice/SDK/headers" "C:/SLDevice/SDK/headers/GIGEheaders" "C:/SLDevice/SDK/headers/Pleoraheaders"
-LIBS += -L"C:/SLDevice/SDK/lib/x64/Release" -L"C:/SLDevice/SDK/lib/PleoraLibs/x64"
-LIBS += -lSLDeviceLib -lSLImage -llibtiff -llegacy_stdio_definitions
+LIBS += -L"C:/SLDevice/SDK/lib/x64/Release" -L"C:\SLDevice\SDK\lib\x64\Debug" -L"C:/SLDevice/SDK/lib/PleoraLibs/x64"
+LIBS += -lSLDeviceLib -lSLImage -llibtiff -llegacy_stdio_definitions -lPvDevice64
 
 include('../Qylon/Qylon.pri')
 

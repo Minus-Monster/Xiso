@@ -1,6 +1,7 @@
 #include "mainwindow.h"
 #include "Qylon.h"
 #include "Detector.h"
+#include "CGrabber.h"
 #include <QApplication>
 
 int main(int argc, char *argv[])
@@ -8,14 +9,14 @@ int main(int argc, char *argv[])
     QApplication a(argc, argv);
     MainWindow w;
 
-
     Qylon::Qylon q;
-    auto g = q.addGrabber();
+    w.setCamera(q.addCamera());
+
+    CGrabber *g = new CGrabber;
     w.setGrabber(g);
 
-    Detector *d = new Detector;
-    w.setDetector(d);
-
+//    Detector *d = new Detector;
+//    w.setDetector(d);
 
     w.show();
 
