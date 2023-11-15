@@ -16,7 +16,8 @@ public:
     bool initialize();
     static void callBackLive(SpectrumLogic::ushort* pImg, int* pWidth, int* pHeight, SpectrumLogic::SLError* err, void* userArgs);
     void sequentialGrabbing(int frameCount);
-    void stopGrabLive();
+    void continuousGrabbing();
+    void stopGrabbing();
     void setROI(int _w, int _h, int _x, int _y);
     void setWidth(int _w);
     int getWidth();
@@ -26,16 +27,26 @@ public:
     int getX();
     void setY(int _y);
     int getY();
-    void setExposureTime(int us);
+    bool setExposureTime(int us);
     int getExposureTime(){ return exposureTime; }
+    bool setExposureMode(SpectrumLogic::ExposureModes mode);
+    SpectrumLogic::ExposureModes getExposureMode();
+    bool setBinningMode(SpectrumLogic::BinningModes mode);
+    SpectrumLogic::BinningModes getBinningMode();
+    void setSaveMode(bool on){ saveMode = on; }
+    void setSavingPath(QString path){ savePath = path; }
+    QString getSavingPath(){ return savePath; }
+    bool isSaveMode(){ return saveMode; }
 
 signals:
-    void transfer();
-    void sendBuffer(const void* buffer);
+    void sendBuffer(const unsigned short* buffer);
 
 private:
     SpectrumLogic::SLDevice sl_device;
-    int exposureTime = 3000;
+    int exposureTime = 5000;
     SpectrumLogic::DeviceInterface sl_iFace{ SpectrumLogic::S2I_GIGE };
+    bool saveMode = false;
+    QString savePath ="";
+
 };
 #endif // DETECTOR_H

@@ -9,6 +9,7 @@
 #include <QObject>
 #include <QImage>
 #include <QDebug>
+#include <QElapsedTimer>
 
 struct APC {
     FgApcControl ctrl;
@@ -27,10 +28,11 @@ public:
     void loadConfiguration(QString path);
     void initialize();
     int getDMALength();
-    void setWidth(int _w){ width = _w; }
+    void setWidth(int _w);
     int getWidth(){ return width; }
-    void setHeight(int _h){ height = _h; }
+    void setHeight(int _h);
     int getHeight(){ return height; }
+    void setROI(int width, int height);
     void setBytesPerPixel(int _b){ bytesperpixel = _b; }
     int getBytesPerPixel(){ return bytesperpixel; }
     Fg_Struct* getFg(){ return currentFg; }
@@ -42,6 +44,10 @@ public:
     void stopGrabbing();
     bool isContinuous(){ return continuousMode;}
     int getSequentialNumFrame(){ return sequentialNumFrame; }
+    bool isRunning = false;
+    QElapsedTimer *timer;
+
+public slots:
     void convertToGrabberImage(const unsigned short *buffer);
 
 signals:
@@ -65,6 +71,7 @@ private:
     void setContinuous(bool on){ continuousMode = on; }
     bool continuousMode = false;
     int sequentialNumFrame = 0;
+
 
 };
 

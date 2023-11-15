@@ -5,11 +5,14 @@ int callbackFromGrabber(frameindex_t picNr, void *){
     uchar *buffer = (uchar*)Fg_getImagePtrEx(instance->getFg(), picNr, 0, instance->getDMAOut());
     QImage outputImage = QImage(buffer, instance->getWidth(), instance->getHeight(), QImage::Format_Grayscale16);
     emit instance->sendImage(outputImage);
+    qDebug() << instance->timer->elapsed();
 
-    qDebug() << "Callback called at" << picNr << "My intended" << instance->getSequentialNumFrame();
+//    qDebug() << "Callback called at" << picNr << "My intended" << instance->getSequentialNumFrame();
     if(!instance->isContinuous() && (instance->getSequentialNumFrame() != 0)){
-        if(picNr == instance->getSequentialNumFrame()){ instance->stopGrabbing();
-        qDebug() << "Called stop grabbing";
+        if(picNr == instance->getSequentialNumFrame()){
+            qDebug() << "Called stop grabbing";
+            instance->stopGrabbing();
+            instance->isRunning = false;
         }
     }
     return 0;
@@ -19,6 +22,7 @@ CGrabber::CGrabber(QObject *parent)
     : QObject{parent}
 {
     instance = this;
+    timer = new QElapsedTimer;
 }
 
 CGrabber::~CGrabber()
@@ -81,6 +85,40 @@ int CGrabber::getDMALength()
     return width*height*bytesperpixel;
 }
 
+void CGrabber::setWidth(int _w){
+
+    width = _w;
+
+}
+
+void CGrabber::setHeight(int _h){
+    height = _h;
+}
+
+void CGrabber::setROI(int width, int height){
+    Fg_setParameterWithType(currentFg, getParameterId("Device1_Process0_Implementation_module133_X_Length"), width, 0);
+    //YLegnth
+    Fg_setParameterWithType(currentFg, getParameterId("Device1_Process0_Implementation_module133_Y_Length"), height, 0);
+    //Fg_setParameter(fg, FG_HEIGHT, &m_iHeight, 0);
+
+    // Set Cal XLength
+    unsigned int xLength = width /8;
+    Fg_setParameterWithType(currentFg, getParameterId("Device1_Process0_Implementation_ShadingCorrection_Cal_Data_XLength"), xLength, 0);
+
+    // Set Cal YLength
+    unsigned int yLength = height;
+    Fg_setParameterWithType(currentFg, getParameterId("Device1_Process0_Implementation_ShadingCorrection_Cal_Data_YLength"), yLength, 0);
+
+    // Update ROI
+    unsigned int nUpdateROI;
+    nUpdateROI = 1;
+    Fg_setParameterWithType(currentFg, getParameterId("Device1_Process0_Implementation_ShadingCorrection_Cal_Data_UpdateROI"), nUpdateROI, 0);
+
+    Fg_setParameter(currentFg, FG_WIDTH, &width, 0);
+    Fg_setParameter(currentFg, FG_HEIGHT, &height, 0);
+
+}
+
 int CGrabber::getParameterId(QString parameter)
 {
     return Fg_getParameterIdByName(currentFg, parameter.toStdString().c_str());
@@ -97,6 +135,7 @@ void CGrabber::setCalibMode(bool on)
 
 void CGrabber::sequentialGrabbing(int numFrame)
 {
+    isRunning = true;
     setContinuous(false);
     sequentialNumFrame = numFrame;
     auto a = Fg_AcquireEx(currentFg, 0, numFrame, ACQ_STANDARD, DMAOut);
@@ -106,6 +145,7 @@ void CGrabber::sequentialGrabbing(int numFrame)
 
 void CGrabber::continuousGrabbing()
 {
+    isRunning = true;
     setContinuous(true);
     sequentialNumFrame = 0;
     auto a = Fg_AcquireEx(currentFg, 0, GRAB_INFINITE, ACQ_STANDARD, DMAOut);
@@ -116,6 +156,7 @@ void CGrabber::continuousGrabbing()
 
 void CGrabber::stopGrabbing()
 {
+    isRunning = false;
     sequentialNumFrame = 0;
     setContinuous(false);
 
@@ -126,10 +167,13 @@ void CGrabber::stopGrabbing()
 
 void CGrabber::convertToGrabberImage(const unsigned short *buffer)
 {
-    qDebug() << "Allocating to Grabber";
-    size_t dmaLen = getDMALength();
-    memcpy(imgBuffer, buffer, dmaLen);
-    auto error = SHalSetBufferStatus(vaDevice, DMAInverse, ((dmaLen / 4) << 32) | 0, FG_SELECT_BUFFER );
-    if(error != 0) qDebug() << Fg_getErrorDescription(currentFg, error);
+//    qDebug() << "Allocating to Grabber";
+    if(isRunning){
+        timer->restart();
+        size_t dmaLen = getDMALength();
+        memcpy(imgBuffer, buffer, dmaLen);
+        auto error = SHalSetBufferStatus(vaDevice, DMAInverse, ((dmaLen / 4) << 32) | 0, FG_SELECT_BUFFER );
+        if(error != 0) qDebug() << Fg_getErrorDescription(currentFg, error);
+    }
 }
 

@@ -11,6 +11,10 @@ bool Detector::initialize(){
     }
     else qDebug() << "Opened a SL camera.";
 
+    setBinningMode(SpectrumLogic::BinningModes::x11);
+    sl_device.SetFullWell(SpectrumLogic::FullWellModes::Low);
+    sl_device.SetTestMode(false);
+
     instance = this;
     return true;
 }
@@ -27,24 +31,42 @@ void Detector::callBackLive(SpectrumLogic::ushort *pImg, int *pWidth, int *pHeig
     SpectrumLogic::SLImage image;
     image.Build(*pWidth, *pHeight, 1);
 
-    /*
-    memcpy(image.GetDataPointer(0), pImg, sizeof(SpectrumLogic::ushort) * *pWidth * *pHeight);
+    if(instance->isSaveMode()){
+        memcpy(image.GetDataPointer(0), pImg, sizeof(SpectrumLogic::ushort) * *pWidth * *pHeight);
+        if (!image.WriteTiffImage(instance->getSavingPath().toStdString() + std::to_string(*pFrameCount) + ".tiff", image, 16)){
+            qDebug() << "[ERROR]: Failed to save frame #" << *pFrameCount + 1;
+        }
+    }
 
-    if (!image.WriteTiffImage("C:/GoLiveCallbackCapture" + std::to_string(*pFrameCount + 1) + ".tif", image, 16))
-        qDebug() << "[ERROR]: Failed to save frame #" << *pFrameCount + 1;
-
-    */
     ++*pFrameCount;
     emit instance->sendBuffer(pImg);
 }
 
-void Detector::sequentialGrabbing(int frameCount) {
-    qDebug() << "Exp :" << exposureTime << ", FrameCount : " << frameCount << "\n";
+void Detector::sequentialGrabbing(int numFrame) {
+    if(!sl_device.IsConnected()){
+        qDebug() << "SL Device is not connected. Nothing will be changed.";
+        return;
+    }
+    setExposureMode(SpectrumLogic::ExposureModes::seq_mode);
 
+    sl_device.SetNumberOfFrames(numFrame + 1);
+
+    int frameCount = 0;
+    sl_device.GoLive(callBackLive, &frameCount);
+    sl_device.SoftwareTrigger();
+}
+
+void Detector::continuousGrabbing()
+{
+    int frameCount = 0;
     sl_device.GoLive(callBackLive, &frameCount);
 }
 
-void Detector::stopGrabLive() {
+void Detector::stopGrabbing() {
+    if(!sl_device.IsConnected()){
+        qDebug() << "SL Device is not connected. Nothing will be changed.";
+        return;
+    }
     sl_device.GoUnLive();
 }
 
@@ -111,7 +133,38 @@ int Detector::getY()
     return roiInfo.Y;
 }
 
-void Detector::setExposureTime(int us){
-    sl_device.SetExposureTime(exposureTime);
+bool Detector::setExposureTime(int us){
+    if(!sl_device.IsConnected()){
+        qDebug() << "SL Device is not connected. Nothing will be changed.";
+        return false;
+    }
+    auto error = sl_device.SetExposureTime(exposureTime);
+    qDebug() << SpectrumLogic::SLErrorToString(error).c_str();
     exposureTime = us;
+
+    return true;
+}
+
+bool Detector::setExposureMode(SpectrumLogic::ExposureModes mode)
+{
+    auto error = sl_device.SetExposureMode(mode);
+    qDebug() << SpectrumLogic::SLErrorToString(error).c_str();
+    return true;
+}
+
+SpectrumLogic::ExposureModes Detector::getExposureMode()
+{
+    SpectrumLogic::ExposureModes mode;
+    sl_device.GetExposureMode(mode);
+    return mode;
+}
+
+bool Detector::setBinningMode(SpectrumLogic::BinningModes mode){
+    auto error = sl_device.SetBinningMode(mode);
+    qDebug()<< SpectrumLogic::SLErrorToString(error).c_str();
+    return true;
+}
+
+SpectrumLogic::BinningModes Detector::getBinningMode(){
+    return sl_device.GetBinningMode();
 }
