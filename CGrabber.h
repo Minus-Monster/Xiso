@@ -5,6 +5,7 @@
 #include "fg_struct.h"
 #include "sisoIo.h"
 #include "siso_hal.h"
+#include "CGrabberDialog.h"
 
 #include <QObject>
 #include <QImage>
@@ -71,6 +72,8 @@ private:
     void setContinuous(bool on){ continuousMode = on; }
     bool continuousMode = false;
     int sequentialNumFrame = 0;
+
+    CGrabberDialog *dialog = nullptr;
 
 
 };

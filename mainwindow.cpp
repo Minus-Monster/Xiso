@@ -20,8 +20,9 @@ MainWindow::MainWindow(QWidget *parent)
     ui->frame->setLayout(layout);
     console = new Qylon::DebugConsole;
     ui->formLayout->addRow(console);
+    ui->dockWidget_debug->setVisible(true);
 
-    ui->dockWidget_debug->setVisible(false);
+
     connect(ui->actionDebug_Console, &QAction::triggered, this, [this](bool on){ this->ui->dockWidget_debug->setVisible(on);});
     connect(ui->actionPanel, &QAction::triggered, this, [this](bool on){this->ui->dockWidget_panel->setVisible(on);});
     connect(ui->dockWidget_panel, &QDockWidget::visibilityChanged, this, [this](bool on){this->ui->actionPanel->setChecked(on);});
@@ -567,7 +568,7 @@ void MainWindow::setGrabber(CGrabber *c)
         //        grabber->loadApplet(applet);
         //        grabber->loadConfiguration(config);
         grabber->loadApplet("C:/Program Files/Basler/FramegrabberSDK/Hardware Applets/IMP-CX-4S/Innometry_10G_Project.hap");
-        grabber->loadConfiguration("C:/Users/User/Desktop/10G/SimpleTest/Inno.mcf");
+        grabber->loadConfiguration("C:/Users/minwoo/Desktop/Minu/Xiso/Inno.mcf");
         grabber->initialize();
 
         QMessageBox::information(this, "Basler Framegrabber", "Loading is finished.");

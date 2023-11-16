@@ -22,6 +22,8 @@ CGrabber::CGrabber(QObject *parent)
 {
     instance = this;
     timer = new QElapsedTimer;
+    dialog = new CGrabberDialog;
+    dialog->show();
 }
 
 CGrabber::~CGrabber()

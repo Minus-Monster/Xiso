@@ -10,6 +10,7 @@ CONFIG += c++17
 
 SOURCES += \
     CGrabber.cpp \
+    CGrabberDialog.cpp \
     Detector.cpp \
     main.cpp \
     mainwindow.cpp \
@@ -17,6 +18,7 @@ SOURCES += \
 
 HEADERS += \
     CGrabber.h \
+    CGrabberDialog.h \
     Detector.h \
     mainwindow.h \
     GraphicsScene.h \
@@ -24,6 +26,7 @@ HEADERS += \
     GraphicsWidget.h
 
 FORMS += \
+    CGrabberDialog.ui \
     mainwindow.ui
 
 # Default rules for deployment.
