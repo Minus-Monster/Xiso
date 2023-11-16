@@ -5,9 +5,8 @@ int callbackFromGrabber(frameindex_t picNr, void *){
     uchar *buffer = (uchar*)Fg_getImagePtrEx(instance->getFg(), picNr, 0, instance->getDMAOut());
     QImage outputImage = QImage(buffer, instance->getWidth(), instance->getHeight(), QImage::Format_Grayscale16);
     emit instance->sendImage(outputImage);
-    qDebug() << instance->timer->elapsed();
-
-//    qDebug() << "Callback called at" << picNr << "My intended" << instance->getSequentialNumFrame();
+//    qDebug() << instance->timer->elapsed();
+//    qDebug() << "Callback called a t" << picNr << "My intended" << instance->getSequentialNumFrame();
     if(!instance->isContinuous() && (instance->getSequentialNumFrame() != 0)){
         if(picNr == instance->getSequentialNumFrame()){
             qDebug() << "Called stop grabbing";
@@ -95,28 +94,33 @@ void CGrabber::setHeight(int _h){
     height = _h;
 }
 
-void CGrabber::setROI(int width, int height){
-    Fg_setParameterWithType(currentFg, getParameterId("Device1_Process0_Implementation_module133_X_Length"), width, 0);
+bool CGrabber::setROI(int width, int height){
+    int a, b,c,d,e,f,g;
+    a= Fg_setParameterWithType(currentFg, getParameterId("Device1_Process0_Implementation_module133_X_Length"), width, 0);
     //YLegnth
-    Fg_setParameterWithType(currentFg, getParameterId("Device1_Process0_Implementation_module133_Y_Length"), height, 0);
+    b=Fg_setParameterWithType(currentFg, getParameterId("Device1_Process0_Implementation_module133_Y_Length"), height, 0);
     //Fg_setParameter(fg, FG_HEIGHT, &m_iHeight, 0);
 
     // Set Cal XLength
     unsigned int xLength = width /8;
-    Fg_setParameterWithType(currentFg, getParameterId("Device1_Process0_Implementation_ShadingCorrection_Cal_Data_XLength"), xLength, 0);
+    c=Fg_setParameterWithType(currentFg, getParameterId("Device1_Process0_Implementation_ShadingCorrection_Cal_Data_XLength"), xLength, 0);
 
     // Set Cal YLength
     unsigned int yLength = height;
-    Fg_setParameterWithType(currentFg, getParameterId("Device1_Process0_Implementation_ShadingCorrection_Cal_Data_YLength"), yLength, 0);
+    d=Fg_setParameterWithType(currentFg, getParameterId("Device1_Process0_Implementation_ShadingCorrection_Cal_Data_YLength"), yLength, 0);
 
     // Update ROI
     unsigned int nUpdateROI;
     nUpdateROI = 1;
-    Fg_setParameterWithType(currentFg, getParameterId("Device1_Process0_Implementation_ShadingCorrection_Cal_Data_UpdateROI"), nUpdateROI, 0);
+    e=Fg_setParameterWithType(currentFg, getParameterId("Device1_Process0_Implementation_ShadingCorrection_Cal_Data_UpdateROI"), nUpdateROI, 0);
 
-    Fg_setParameter(currentFg, FG_WIDTH, &width, 0);
-    Fg_setParameter(currentFg, FG_HEIGHT, &height, 0);
+    f=Fg_setParameter(currentFg, FG_WIDTH, &width, 0);
+    g=Fg_setParameter(currentFg, FG_HEIGHT, &height, 0);
+    qDebug() << Fg_getErrorDescription(currentFg,a)<< Fg_getErrorDescription(currentFg,b) << Fg_getErrorDescription(currentFg,c) << Fg_getErrorDescription(currentFg,d) << Fg_getErrorDescription(currentFg,e) << Fg_getErrorDescription(currentFg,f) << Fg_getErrorDescription(currentFg,g);
 
+    if(a || b || c || d || e || f || g){
+        return false;
+    }else return true;
 }
 
 int CGrabber::getParameterId(QString parameter)
@@ -167,7 +171,6 @@ void CGrabber::stopGrabbing()
 
 void CGrabber::convertToGrabberImage(const unsigned short *buffer)
 {
-//    qDebug() << "Allocating to Grabber";
     if(isRunning){
         timer->restart();
         size_t dmaLen = getDMALength();

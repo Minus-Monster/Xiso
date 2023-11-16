@@ -4,8 +4,9 @@
 #include <QFileDialog>
 #include <QDir>
 #include <fstream>
+#include <QTextBlock>
+#include <QTextCursor>
 
-MainWindow *instance = nullptr;
 MainWindow::MainWindow(QWidget *parent)
     : QMainWindow(parent)
     , ui(new Ui::MainWindow)
@@ -17,24 +18,26 @@ MainWindow::MainWindow(QWidget *parent)
     widget->initialize();
     layout->addWidget(widget);
     ui->frame->setLayout(layout);
+    console = new Qylon::DebugConsole;
+    ui->formLayout->addRow(console);
 
-    debug = new DebugConsole;
-//    ui->formLayout->addRow(debug);
-
-    instance = this;
-
-    //    qInstallMessageHandler(setDebugMessage);
+    ui->dockWidget_debug->setVisible(false);
+    connect(ui->actionDebug_Console, &QAction::triggered, this, [this](bool on){ this->ui->dockWidget_debug->setVisible(on);});
     connect(ui->actionPanel, &QAction::triggered, this, [this](bool on){this->ui->dockWidget_panel->setVisible(on);});
     connect(ui->dockWidget_panel, &QDockWidget::visibilityChanged, this, [this](bool on){this->ui->actionPanel->setChecked(on);});
     connect(ui->pushButton_Sequential, &QPushButton::clicked, this, [this](){
-        emit grabbingStart(ui->spinBox_Sequential->value());
+        int cnt = ui->spinBox_Sequential->value();
         ui->comboBox_exposureMode->setCurrentText("SEQ");
         timer->start();
+        emit grabbingStart(cnt);
     });
     connect(ui->pushButton_Continuous, &QPushButton::clicked, this, [this](bool on){
-        if(on) emit grabbingStart();
-        else emit grabbingFinished();
+        if(on){
+            emit grabbingStart();
+
+        }else emit grabbingFinished();
     });
+
 
     connect(ui->pushButton_dark, &QPushButton::clicked, this, [this](){
         QString path = QFileDialog::getExistingDirectory(this, "Select a directory to save", QDir::homePath());
@@ -70,29 +73,27 @@ MainWindow::MainWindow(QWidget *parent)
         /*
         darkCalPath = "C:/Users/User/Desktop/Minu/Xiso/Test/Dark";
         brightCalPath = "C:/Users/User/Desktop/Minu/Xiso/Test/Bright";
-        if(darkCalPath == "" || brightCalPath =
-= ""){
+        if(darkCalPath == "" || brightCalPath ==  ""){
             qDebug() << "Cal path is not set";
             return;
         }
         auto darkList = QDir(darkCalPath).entryList(QStringList() << "*.tif" << "*.tiff", QDir::Files);
         auto brightList = QDir(brightCalPath).entryList(QStringList() << "*.tif" << "*.tiff", QDir::Files);
 
-        int cnt =0;
-        QImage outPixel = QImage(2400, 600, QImage::Format_Grayscale16);
-        outPixel.fill(0);
+        int cWidth = QImage(darkCalPath + "/" + darkList.first()).width();
+        int cHeight = QImage(darkCalPath + "/" + darkList.first()).height();
 
-        foreach(const QString &imagePath, brightList){
-            QString currentImagePath = brightCalPath + "/" + imagePath;
+        QImage outPixel = QImage(cWidth, cHeight, QImage::Format_Grayscale16);
+        outPixel.fill(0);
+        foreach(const QString &imagePath, darkList){
+            QString currentImagePath = darkCalPath + "/" + imagePath;
             qDebug() << currentImagePath;
 
-            QImage currentImage(brightCalPath + "/" + imagePath);
-            QImage testImage(brightCalPath +"/DMAOut.tiff");
-
+            QImage currentImage(currentImagePath);
             for(int y=0; y < currentImage.height(); ++y){
                 for(int x=0; x < currentImage.width(); ++x){
                     QColor cColor= currentImage.pixelColor(x,y);
-                    qreal corr = cColor.redF()/(qreal)10.;
+                    qreal corr = cColor.redF()/(qreal)darkList.size();
                     qreal outPixelVal = outPixel.pixelColor(x,y).redF();
                     qreal out = outPixel.pixelColor(x,y).redF() + corr;
                     QColor nColor = QColor::fromRgbF(out,out,out, 1);
@@ -104,9 +105,28 @@ MainWindow::MainWindow(QWidget *parent)
                     outPixel.setPixelColor(x, y, nColor);
                 }
             }
-            outPixel.save(brightCalPath +"/" +QString::number(cnt++) +"___result.tiff");
         }
+        outPixel.save(darkCalPath +"/result.tiff");
+
+        QImage front(outPixel.width(), outPixel.height(), QImage::Format::Format_Grayscale8);
+        QImage back(outPixel.width(), outPixel.height(), QImage::Format::Format_Grayscale8);
+        qDebug() << front << back << outPixel;
+        for(int y=0; y < outPixel.height(); ++y){
+            for(int x=0; x <outPixel.width(); ++x){
+                QRgb pixelVal = outPixel.pixel(x,y);
+
+                uchar frontBits = static_cast<uchar>((pixelVal >> 8) & 0xFF);
+                front.setPixel(x,y, qRgb(frontBits, frontBits, frontBits));
+
+                uchar backBits = static_cast<uchar>(pixelVal & 0xFF);
+                back.setPixel(x,y, qRgb(backBits, backBits, backBits));
+            }
+        }
+        front.save(darkCalPath +"/FB.tiff");
+        back.save(darkCalPath +"/BB.tiff");
         */
+
+
 
         SisoIoImageEngine* imageHandle0 = NULL;
         int m_iWidth = this->ui->spinBox_width->value(); // Need to edit
@@ -520,6 +540,7 @@ MainWindow::MainWindow(QWidget *parent)
         lutfile.close();
         grabber->setCalibMode(true);
         QMessageBox::information(this, "Xiso", "Lookup table is done.");
+
     });
 
 }
@@ -539,7 +560,17 @@ void MainWindow::setGrabber(CGrabber *c)
         ui->statusbar->showMessage("Elapsed time : " + QString::number(timer->restart()));
     });
     connect(ui->pushButton_GrabberInitialize, &QPushButton::clicked, this, [this](){
-        emit grabberInit();
+        //        auto applet = QFileDialog::getOpenFileName(this, "Load an applet", QDir::homePath(), "*.hap *.dll");
+        //        if(applet.isEmpty()) return;
+        //        auto config = QFileDialog::getOpenFileName(this, "Load a configuration file", QDir::homePath(), "*.mcf");
+        //        if(config.isEmpty()) return;
+        //        grabber->loadApplet(applet);
+        //        grabber->loadConfiguration(config);
+        grabber->loadApplet("C:/Program Files/Basler/FramegrabberSDK/Hardware Applets/IMP-CX-4S/Innometry_10G_Project.hap");
+        grabber->loadConfiguration("C:/Users/User/Desktop/10G/SimpleTest/Inno.mcf");
+        grabber->initialize();
+
+        QMessageBox::information(this, "Basler Framegrabber", "Loading is finished.");
     });
     connect(ui->pushButton_ResetGrabber, &QPushButton::clicked, this, [this](){
         this->grabber->stopGrabbing();
@@ -549,17 +580,21 @@ void MainWindow::setGrabber(CGrabber *c)
 void MainWindow::setDetector(Detector *d)
 {
     detector = d;
+    ui->comboBox_BinningMode->setCurrentText("1X1");
     connect(ui->pushButton_DetectorInitialize, &QPushButton::clicked, this, [this](){
         detector->initialize();
         detector->setROI(ui->spinBox_width->value(), ui->spinBox_height->value(), 0, 0);
         detector->setExposureMode(SpectrumLogic::ExposureModes::fps25_mode);
-        detector->setExposureTime(5000);
-        ui->comboBox_BinningMode->setCurrentText("1X1");
-        QMessageBox::information(this, "XViewer", "Detector is intialized.");
+        detector->setExposureTime(50);
+        QMessageBox::information(this, "XView", "Detector is intialized.");
     });
-    connect(ui->pushButton_roiApply, &QPushButton::clicked, this, [this](){
-        detector->setROI(ui->spinBox_width->value(), ui->spinBox_height->value(),0,0);
-        grabber->setROI(ui->spinBox_width->value(), ui->spinBox_height->value());
+    connect(ui->pushButton_roiApply, &QPushButton::clicked, this, [this](bool on){
+        qDebug() << "button clicked";
+        bool failed = detector->setROI(ui->spinBox_width->value(), ui->spinBox_height->value(),0,0);
+        if(failed) QMessageBox::information(this, "XView", "It can't put ROI values in the detector");
+        bool succeed = grabber->setROI(ui->spinBox_width->value(), ui->spinBox_height->value());
+        if(!succeed) QMessageBox::information(this, "Basler Framegrabber", "ROI can't apply in the grabber.");
+        else QMessageBox::information(this, "Xiso", "Setting ROI is done.");
     });
     connect(ui->pushButton_detectorApply, &QPushButton::clicked, this, [this](){
         qDebug() << "Exposure Time : " << ui->spinBox_Exposure->value();
@@ -578,7 +613,7 @@ void MainWindow::setDetector(Detector *d)
         }else if(binning == "Unknown"){
             error = detector->setBinningMode(SpectrumLogic::BinningModes::BinningUnknown);
         }
-        if(error) QMessageBox::information(this, "XViewer", "Binning mode is not applied.");
+        if(!error) QMessageBox::information(this, "XViewer", "Binning mode is not applied.");
 
         if(exMode == "FPS25"){
             error = this->detector->setExposureMode(SpectrumLogic::ExposureModes::fps25_mode);
@@ -591,23 +626,17 @@ void MainWindow::setDetector(Detector *d)
         }else if(exMode == "SEQ"){
             error = this->detector->setExposureMode(SpectrumLogic::ExposureModes::seq_mode);
         }
-        if(error) QMessageBox::information(this, "XViewer", "Exposure Mode is not applied.");
+        if(!error) QMessageBox::information(this, "XViewer", "Exposure Mode is not applied.");
 
         error = this->detector->setExposureTime(expTime);
-        if(error) QMessageBox::information(this, "XViewer", "Exposure time is not applied.");
+        if(!error) QMessageBox::information(this, "XViewer", "Exposure time is not applied.");
 
     });
 }
 
 void MainWindow::setMessage(QString message)
 {
-    //    ui->textEdit->append(message);
-    debug->appendText(message);
-}
-
-void setDebugMessage(QtMsgType type, const QMessageLogContext &conText, const QString &msg)
-{
-    instance->setMessage(msg);
+    console->append(message);
 }
 
 

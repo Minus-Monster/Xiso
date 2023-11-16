@@ -3,8 +3,7 @@
 
 #include <QMainWindow>
 #include <QElapsedTimer>
-#include "Acquisition/Camera.h"
-#include "Modules/GraphicsWidget.h"
+#include "GraphicsWidget.h"
 #include "Modules/DebugConsole.h"
 
 #include "Detector.h"
@@ -39,11 +38,10 @@ signals:
 private:
     Ui::MainWindow *ui;
     Qylon::GraphicsWidget *widget;
-    Qylon::Camera *camera;
+    Qylon::DebugConsole *console;
     QVBoxLayout *layout;
     CGrabber *grabber;
     Detector *detector;
-    DebugConsole *debug;
     QElapsedTimer *timer;
     QString darkCalPath="";
     QString brightCalPath="";

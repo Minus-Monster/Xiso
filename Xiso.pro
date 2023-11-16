@@ -12,12 +12,16 @@ SOURCES += \
     CGrabber.cpp \
     Detector.cpp \
     main.cpp \
-    mainwindow.cpp
+    mainwindow.cpp \
+
 
 HEADERS += \
     CGrabber.h \
     Detector.h \
-    mainwindow.h
+    mainwindow.h \
+    GraphicsScene.h \
+    GraphicsView.h \
+    GraphicsWidget.h
 
 FORMS += \
     mainwindow.ui
@@ -39,7 +43,29 @@ INCLUDEPATH += "C:/SLDevice/SDK/headers" "C:/SLDevice/SDK/headers/GIGEheaders" "
 LIBS += -L"C:/SLDevice/SDK/lib/x64/Release" -L"C:\SLDevice\SDK\lib\x64\Debug" -L"C:/SLDevice/SDK/lib/PleoraLibs/x64"
 LIBS += -lSLDeviceLib -lSLImage -llibtiff -llegacy_stdio_definitions -lPvDevice64
 
+INCLUDEPATH += "$$(BASLER_FG_SDK_DIR)/include"
+DEFINES += GRABBER_ENABLED
+
+contains(QMAKE_TARGET.arch, x86_64) {
+    LIBS += -L"$$(BASLER_FG_SDK_DIR)/lib" -L"$$(BASLER_FG_SDK_DIR)/lib/visualc"
+    LIBS += -lclsersis -lsiso_genicam -lsiso_log -lXmlParser_MD_VC141_v3_1_Basler_pylon -lfglib5 -lsiso_hal -llibtiff -liolibrt -ldisplay_lib
+
+#clsersis.lib
+#iolibrt.lib
+#siso_log.lib
+#SLDeviceLib_d.lib
+#SLImage.lib
+#legacy_stdio_definitions.lib
+#PvDevice64.lib
+} else {
+    LIBS += -L"$$(PYLON_DEV_DIR)/lib/win32"
+    LIBS += -L"$$(BASLER_FG_SDK_DIR)/lib"
+}
+
 include('../Qylon/Qylon.pri')
+
+DESTDIR = '../Build/'
 
 RESOURCES += \
     Resources.qrc
+

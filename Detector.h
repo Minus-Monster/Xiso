@@ -18,7 +18,7 @@ public:
     void sequentialGrabbing(int frameCount);
     void continuousGrabbing();
     void stopGrabbing();
-    void setROI(int _w, int _h, int _x, int _y);
+    bool setROI(int _w, int _h, int _x, int _y);
     void setWidth(int _w);
     int getWidth();
     void setHeight(int _h);
@@ -43,7 +43,7 @@ signals:
 
 private:
     SpectrumLogic::SLDevice sl_device;
-    int exposureTime = 5000;
+    int exposureTime = 50;
     SpectrumLogic::DeviceInterface sl_iFace{ SpectrumLogic::S2I_GIGE };
     bool saveMode = false;
     QString savePath ="";

@@ -32,7 +32,7 @@ public:
     int getWidth(){ return width; }
     void setHeight(int _h);
     int getHeight(){ return height; }
-    void setROI(int width, int height);
+    bool setROI(int width, int height);
     void setBytesPerPixel(int _b){ bytesperpixel = _b; }
     int getBytesPerPixel(){ return bytesperpixel; }
     Fg_Struct* getFg(){ return currentFg; }
