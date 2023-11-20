@@ -12,6 +12,7 @@ SOURCES += \
     CGrabber.cpp \
     CGrabberDialog.cpp \
     Detector.cpp \
+    DetectorDialog.cpp \
     main.cpp \
     mainwindow.cpp \
 
@@ -20,6 +21,7 @@ HEADERS += \
     CGrabber.h \
     CGrabberDialog.h \
     Detector.h \
+    DetectorDialog.h \
     mainwindow.h \
     GraphicsScene.h \
     GraphicsView.h \
@@ -27,6 +29,7 @@ HEADERS += \
 
 FORMS += \
     CGrabberDialog.ui \
+    DetectorDialog.ui \
     mainwindow.ui
 
 # Default rules for deployment.
@@ -65,7 +68,7 @@ contains(QMAKE_TARGET.arch, x86_64) {
     LIBS += -L"$$(BASLER_FG_SDK_DIR)/lib"
 }
 
-include('../Qylon/Qylon.pri')
+#include('../Qylon/Qylon.pri')
 
 DESTDIR = '../Build/'
 

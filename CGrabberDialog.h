@@ -16,6 +16,7 @@ public:
     explicit CGrabberDialog(QWidget *parent = nullptr);
     ~CGrabberDialog();
     void setGrabber(CGrabber *_grabber);
+    void updateInformation();
 
 private:
     Ui::CGrabberDialog *ui;

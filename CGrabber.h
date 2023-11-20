@@ -25,15 +25,40 @@ class CGrabber : public QObject
 public:
     explicit CGrabber(QObject *parent = nullptr);
     ~CGrabber();
-    void loadApplet(QString path);
-    void loadConfiguration(QString path);
+    bool loadApplet(QString path);
+    bool loadConfiguration(QString path);
     void initialize();
     int getDMALength();
-    void setWidth(int _w);
-    int getWidth(){ return width; }
-    void setHeight(int _h);
-    int getHeight(){ return height; }
+
+    bool setOutWidth(int _w);
+    int getOutWidth();
+    bool setOutHeight(int _h);
+    int getOutHeight();
+    bool setXOffset(int _x);
+    int getXOffset();
+    bool setYOffset(int _y);
+    int getYOffset();
+
+    bool setImageWidth(int _w);
+    bool setImageHeight(int _h);
+    int getImageWidth();
+    int getImageHeight();
+
     bool setROI(int width, int height);
+
+    bool setShadingCorrectionEnable(bool on);
+    bool getShadingCorrectionEnable();
+
+    bool setOverSaturation(int _v);
+    int getOverSaturation();
+
+    bool setLUTFileName(QString fileName);
+    QString getLUTFileName();
+
+    bool setInitFile(bool on);
+    bool getInitFile();
+
+
     void setBytesPerPixel(int _b){ bytesperpixel = _b; }
     int getBytesPerPixel(){ return bytesperpixel; }
     Fg_Struct* getFg(){ return currentFg; }
@@ -47,9 +72,10 @@ public:
     int getSequentialNumFrame(){ return sequentialNumFrame; }
     bool isRunning = false;
     QElapsedTimer *timer;
+    QDialog *getDialog(){ return dynamic_cast<QDialog*>(dialog);}
 
 public slots:
-    void convertToGrabberImage(const unsigned short *buffer);
+    void convertToGrabberImage(unsigned short *buffer);
 
 signals:
     void sendImage(const QImage &image);

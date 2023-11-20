@@ -6,20 +6,20 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>1217</width>
-    <height>630</height>
+    <width>1330</width>
+    <height>824</height>
    </rect>
   </property>
   <property name="windowTitle">
    <string>Project Xiso</string>
   </property>
   <property name="windowIcon">
-   <iconset resource="../Qylon/Resources/Resources.qrc">
+   <iconset>
     <normaloff>:/Qylon/Resources/Icon.png</normaloff>:/Qylon/Resources/Icon.png</iconset>
   </property>
   <widget class="QWidget" name="centralwidget">
-   <layout class="QGridLayout" name="gridLayout">
-    <item row="0" column="0">
+   <layout class="QGridLayout" name="gridLayout_11">
+    <item row="2" column="0">
      <widget class="QFrame" name="frame">
       <property name="frameShape">
        <enum>QFrame::StyledPanel</enum>
@@ -36,7 +36,7 @@
     <rect>
      <x>0</x>
      <y>0</y>
-     <width>1217</width>
+     <width>1330</width>
      <height>21</height>
     </rect>
    </property>
@@ -46,36 +46,80 @@
     </property>
     <addaction name="actionPanel"/>
     <addaction name="actionDebug_Console"/>
+    <addaction name="actionDetector_Settings"/>
+    <addaction name="actionGrabber_Settings"/>
    </widget>
    <addaction name="menuWindow"/>
   </widget>
   <widget class="QStatusBar" name="statusbar"/>
-  <widget class="QDockWidget" name="dockWidget_panel">
-   <property name="floating">
-    <bool>false</bool>
-   </property>
+  <widget class="QDockWidget" name="dockWidget_debug">
    <property name="allowedAreas">
-    <set>Qt::BottomDockWidgetArea|Qt::TopDockWidgetArea</set>
+    <set>Qt::BottomDockWidgetArea</set>
    </property>
    <property name="windowTitle">
-    <string>Settings</string>
+    <string>Debug Console</string>
    </property>
+   <attribute name="dockWidgetArea">
+    <number>8</number>
+   </attribute>
+   <widget class="QWidget" name="dockWidgetContents_5">
+    <layout class="QGridLayout" name="gridLayout_9">
+     <item row="0" column="0">
+      <layout class="QFormLayout" name="formLayout"/>
+     </item>
+     <item row="2" column="0">
+      <widget class="QTextEdit" name="textEdit"/>
+     </item>
+    </layout>
+   </widget>
+  </widget>
+  <widget class="QDockWidget" name="dockWidget_grabber">
+   <property name="windowTitle">
+    <string>Grabber Settings</string>
+   </property>
+   <attribute name="dockWidgetArea">
+    <number>2</number>
+   </attribute>
+   <widget class="QWidget" name="dockWidgetContents_6">
+    <layout class="QGridLayout" name="gridLayout_12">
+     <item row="0" column="0">
+      <layout class="QFormLayout" name="formLayout_grabber"/>
+     </item>
+    </layout>
+   </widget>
+  </widget>
+  <widget class="QDockWidget" name="dockWidget_detector">
+   <property name="windowTitle">
+    <string>Detector Settings</string>
+   </property>
+   <attribute name="dockWidgetArea">
+    <number>2</number>
+   </attribute>
+   <widget class="QWidget" name="dockWidgetContents_11">
+    <layout class="QGridLayout" name="gridLayout">
+     <item row="0" column="0">
+      <layout class="QFormLayout" name="formLayout_detector"/>
+     </item>
+    </layout>
+   </widget>
+  </widget>
+  <widget class="QDockWidget" name="dockWidget_panel">
    <attribute name="dockWidgetArea">
     <number>4</number>
    </attribute>
-   <widget class="QWidget" name="dockWidgetContents_2">
-    <layout class="QGridLayout" name="gridLayout_7">
+   <widget class="QWidget" name="dockWidgetContents_16">
+    <layout class="QGridLayout" name="gridLayout_22">
      <item row="0" column="0">
-      <widget class="QFrame" name="frame_2">
+      <widget class="QFrame" name="frame_4">
        <property name="frameShape">
         <enum>QFrame::StyledPanel</enum>
        </property>
        <property name="frameShadow">
         <enum>QFrame::Raised</enum>
        </property>
-       <layout class="QGridLayout" name="gridLayout_6">
+       <layout class="QGridLayout" name="gridLayout_23">
         <item row="0" column="6">
-         <spacer name="horizontalSpacer">
+         <spacer name="horizontalSpacer_3">
           <property name="orientation">
            <enum>Qt::Horizontal</enum>
           </property>
@@ -88,11 +132,11 @@
          </spacer>
         </item>
         <item row="0" column="1">
-         <widget class="QGroupBox" name="groupBox">
+         <widget class="QGroupBox" name="groupBox_5">
           <property name="title">
            <string>Calibration</string>
           </property>
-          <layout class="QGridLayout" name="gridLayout_5">
+          <layout class="QGridLayout" name="gridLayout_24">
            <item row="1" column="1">
             <widget class="QPushButton" name="pushButton_bright">
              <property name="text">
@@ -128,15 +172,15 @@
          </widget>
         </item>
         <item row="0" column="0">
-         <widget class="QGroupBox" name="groupBox_Acquisition">
+         <widget class="QGroupBox" name="groupBox_Acquisition_3">
           <property name="title">
            <string>Acquisition</string>
           </property>
-          <layout class="QGridLayout" name="gridLayout_2">
+          <layout class="QGridLayout" name="gridLayout_25">
            <item row="0" column="0">
-            <layout class="QVBoxLayout" name="verticalLayout">
+            <layout class="QVBoxLayout" name="verticalLayout_7">
              <item>
-              <layout class="QHBoxLayout" name="horizontalLayout">
+              <layout class="QHBoxLayout" name="horizontalLayout_15">
                <item>
                 <widget class="QPushButton" name="pushButton_Sequential">
                  <property name="text">
@@ -172,17 +216,17 @@
          </widget>
         </item>
         <item row="0" column="5">
-         <widget class="QGroupBox" name="groupBox_ROI">
+         <widget class="QGroupBox" name="groupBox_ROI_3">
           <property name="title">
            <string>ROI</string>
           </property>
-          <layout class="QGridLayout" name="gridLayout_4">
+          <layout class="QGridLayout" name="gridLayout_26">
            <item row="0" column="0">
-            <layout class="QVBoxLayout" name="verticalLayout_2">
+            <layout class="QVBoxLayout" name="verticalLayout_8">
              <item>
-              <layout class="QHBoxLayout" name="horizontalLayout_6">
+              <layout class="QHBoxLayout" name="horizontalLayout_16">
                <item>
-                <widget class="QLabel" name="label_2">
+                <widget class="QLabel" name="label_9">
                  <property name="text">
                   <string>Width</string>
                  </property>
@@ -197,16 +241,16 @@
                   <number>99999</number>
                  </property>
                  <property name="value">
-                  <number>2400</number>
+                  <number>1</number>
                  </property>
                 </widget>
                </item>
               </layout>
              </item>
              <item>
-              <layout class="QHBoxLayout" name="horizontalLayout_7">
+              <layout class="QHBoxLayout" name="horizontalLayout_17">
                <item>
-                <widget class="QLabel" name="label_3">
+                <widget class="QLabel" name="label_10">
                  <property name="text">
                   <string>Height</string>
                  </property>
@@ -221,7 +265,7 @@
                   <number>99999</number>
                  </property>
                  <property name="value">
-                  <number>600</number>
+                  <number>1</number>
                  </property>
                 </widget>
                </item>
@@ -230,9 +274,9 @@
             </layout>
            </item>
            <item row="0" column="1">
-            <layout class="QVBoxLayout" name="verticalLayout_3">
+            <layout class="QVBoxLayout" name="verticalLayout_9">
              <item>
-              <layout class="QHBoxLayout" name="horizontalLayout_3">
+              <layout class="QHBoxLayout" name="horizontalLayout_18">
                <item>
                 <widget class="QLabel" name="label_roiX">
                  <property name="text">
@@ -250,7 +294,7 @@
               </layout>
              </item>
              <item>
-              <layout class="QHBoxLayout" name="horizontalLayout_2">
+              <layout class="QHBoxLayout" name="horizontalLayout_19">
                <item>
                 <widget class="QLabel" name="label_roiY">
                  <property name="text">
@@ -280,11 +324,11 @@
          </widget>
         </item>
         <item row="0" column="2">
-         <widget class="QGroupBox" name="groupBox_2">
+         <widget class="QGroupBox" name="groupBox_6">
           <property name="title">
            <string>Grabber Settings</string>
           </property>
-          <layout class="QGridLayout" name="gridLayout_8">
+          <layout class="QGridLayout" name="gridLayout_27">
            <item row="0" column="0">
             <widget class="QPushButton" name="pushButton_GrabberInitialize">
              <property name="text">
@@ -303,81 +347,15 @@
          </widget>
         </item>
         <item row="0" column="4">
-         <widget class="QGroupBox" name="groupBox_camera">
+         <widget class="QGroupBox" name="groupBox_camera_3">
           <property name="title">
            <string>Detector Settings</string>
           </property>
-          <layout class="QGridLayout" name="gridLayout_10">
-           <item row="3" column="0">
-            <layout class="QHBoxLayout" name="horizontalLayout_5">
-             <item>
-              <widget class="QLabel" name="label">
-               <property name="text">
-                <string>Binning Mode</string>
-               </property>
-              </widget>
-             </item>
-             <item>
-              <widget class="QComboBox" name="comboBox_BinningMode">
-               <property name="currentText">
-                <string>1X1</string>
-               </property>
-               <item>
-                <property name="text">
-                 <string>Unknown</string>
-                </property>
-               </item>
-               <item>
-                <property name="text">
-                 <string>1X1</string>
-                </property>
-               </item>
-               <item>
-                <property name="text">
-                 <string>2X2</string>
-                </property>
-               </item>
-               <item>
-                <property name="text">
-                 <string>4X4</string>
-                </property>
-               </item>
-              </widget>
-             </item>
-            </layout>
-           </item>
-           <item row="1" column="0">
-            <layout class="QHBoxLayout" name="horizontalLayout_4">
-             <item>
-              <widget class="QLabel" name="label_exposure">
-               <property name="text">
-                <string>Exposure Time</string>
-               </property>
-              </widget>
-             </item>
-             <item>
-              <widget class="QSpinBox" name="spinBox_Exposure">
-               <property name="maximum">
-                <number>99999999</number>
-               </property>
-               <property name="value">
-                <number>50</number>
-               </property>
-              </widget>
-             </item>
-            </layout>
-           </item>
-           <item row="0" column="0">
-            <widget class="QPushButton" name="pushButton_DetectorInitialize">
-             <property name="text">
-              <string>Initialize</string>
-             </property>
-            </widget>
-           </item>
+          <layout class="QGridLayout" name="gridLayout_28">
            <item row="2" column="0">
-            <layout class="QGridLayout" name="gridLayout_3">
+            <layout class="QGridLayout" name="gridLayout_29">
              <item row="0" column="0">
-              <widget class="QLabel" name="label_4">
+              <widget class="QLabel" name="label_11">
                <property name="text">
                 <string>Exposure Mode</string>
                </property>
@@ -414,10 +392,83 @@
              </item>
             </layout>
            </item>
+           <item row="0" column="0">
+            <widget class="QPushButton" name="pushButton_DetectorInitialize">
+             <property name="text">
+              <string>Initialize</string>
+             </property>
+            </widget>
+           </item>
            <item row="4" column="0">
             <widget class="QPushButton" name="pushButton_detectorApply">
              <property name="text">
               <string>Apply</string>
+             </property>
+            </widget>
+           </item>
+           <item row="1" column="0">
+            <layout class="QHBoxLayout" name="horizontalLayout_20">
+             <item>
+              <widget class="QLabel" name="label_exposure">
+               <property name="text">
+                <string>Exposure Time</string>
+               </property>
+              </widget>
+             </item>
+             <item>
+              <widget class="QSpinBox" name="spinBox_Exposure">
+               <property name="maximum">
+                <number>99999999</number>
+               </property>
+               <property name="value">
+                <number>0</number>
+               </property>
+              </widget>
+             </item>
+            </layout>
+           </item>
+           <item row="3" column="0">
+            <layout class="QHBoxLayout" name="horizontalLayout_21">
+             <item>
+              <widget class="QLabel" name="label_12">
+               <property name="text">
+                <string>Binning Mode</string>
+               </property>
+              </widget>
+             </item>
+             <item>
+              <widget class="QComboBox" name="comboBox_BinningMode">
+               <property name="currentText">
+                <string>Unknown</string>
+               </property>
+               <item>
+                <property name="text">
+                 <string>Unknown</string>
+                </property>
+               </item>
+               <item>
+                <property name="text">
+                 <string>1X1</string>
+                </property>
+               </item>
+               <item>
+                <property name="text">
+                 <string>2X2</string>
+                </property>
+               </item>
+               <item>
+                <property name="text">
+                 <string>4X4</string>
+                </property>
+               </item>
+              </widget>
+             </item>
+            </layout>
+           </item>
+           <item row="5" column="0">
+            <widget class="QPushButton" name="pushButton_detectorStop">
+             <property name="text">
+              <string>Detector stop</string>
              </property>
             </widget>
            </item>
@@ -426,24 +477,6 @@
         </item>
        </layout>
       </widget>
-     </item>
-    </layout>
-   </widget>
-  </widget>
-  <widget class="QDockWidget" name="dockWidget_debug">
-   <property name="allowedAreas">
-    <set>Qt::BottomDockWidgetArea</set>
-   </property>
-   <property name="windowTitle">
-    <string>Debug Console</string>
-   </property>
-   <attribute name="dockWidgetArea">
-    <number>8</number>
-   </attribute>
-   <widget class="QWidget" name="dockWidgetContents_5">
-    <layout class="QGridLayout" name="gridLayout_9">
-     <item row="0" column="0">
-      <layout class="QFormLayout" name="formLayout"/>
      </item>
     </layout>
    </widget>
@@ -490,58 +523,32 @@
     <string>Debug Console</string>
    </property>
   </action>
+  <action name="actionGrabber_Settings">
+   <property name="checkable">
+    <bool>true</bool>
+   </property>
+   <property name="checked">
+    <bool>true</bool>
+   </property>
+   <property name="text">
+    <string>Grabber Settings</string>
+   </property>
+  </action>
+  <action name="actionDetector_Settings">
+   <property name="checkable">
+    <bool>true</bool>
+   </property>
+   <property name="checked">
+    <bool>true</bool>
+   </property>
+   <property name="text">
+    <string>Detector Settings</string>
+   </property>
+  </action>
  </widget>
- <resources>
-  <include location="../Qylon/Resources/Resources.qrc"/>
- </resources>
- <connections>
-  <connection>
-   <sender>pushButton_Continuous</sender>
-   <signal>toggled(bool)</signal>
-   <receiver>pushButton_Sequential</receiver>
-   <slot>setDisabled(bool)</slot>
-   <hints>
-    <hint type="sourcelabel">
-     <x>179</x>
-     <y>148</y>
-    </hint>
-    <hint type="destinationlabel">
-     <x>112</x>
-     <y>116</y>
-    </hint>
-   </hints>
-  </connection>
-  <connection>
-   <sender>pushButton_Continuous</sender>
-   <signal>toggled(bool)</signal>
-   <receiver>spinBox_Sequential</receiver>
-   <slot>setDisabled(bool)</slot>
-   <hints>
-    <hint type="sourcelabel">
-     <x>128</x>
-     <y>148</y>
-    </hint>
-    <hint type="destinationlabel">
-     <x>188</x>
-     <y>116</y>
-    </hint>
-   </hints>
-  </connection>
-  <connection>
-   <sender>pushButton_Continuous</sender>
-   <signal>clicked(bool)</signal>
-   <receiver>pushButton_ResetGrabber</receiver>
-   <slot>setDisabled(bool)</slot>
-   <hints>
-    <hint type="sourcelabel">
-     <x>127</x>
-     <y>133</y>
-    </hint>
-    <hint type="destinationlabel">
-     <x>122</x>
-     <y>161</y>
-    </hint>
-   </hints>
-  </connection>
- </connections>
+ <tabstops>
+  <tabstop>textEdit</tabstop>
+ </tabstops>
+ <resources/>
+ <connections/>
 </ui>

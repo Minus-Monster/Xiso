@@ -1,20 +1,22 @@
 #ifndef DETECTOR_H
 #define DETECTOR_H
 
+#include "DetectorDialog.h"
 #include "SLDevice.h"
 #include "SLImage.h"
 #include <iostream>
 #include <QObject>
 #include <QDebug>
+#include <QDialog>
 
+class DetectorDialog;
 class Detector : public QObject
 {
     Q_OBJECT
 public:
-    Detector() {}
+    Detector();
     ~Detector(){}
     bool initialize();
-    static void callBackLive(SpectrumLogic::ushort* pImg, int* pWidth, int* pHeight, SpectrumLogic::SLError* err, void* userArgs);
     void sequentialGrabbing(int frameCount);
     void continuousGrabbing();
     void stopGrabbing();
@@ -27,26 +29,35 @@ public:
     int getX();
     void setY(int _y);
     int getY();
-    bool setExposureTime(int us);
-    int getExposureTime(){ return exposureTime; }
+    bool setExposureTime(int ms);
+    int getExposureTime();
     bool setExposureMode(SpectrumLogic::ExposureModes mode);
     SpectrumLogic::ExposureModes getExposureMode();
+
     bool setBinningMode(SpectrumLogic::BinningModes mode);
     SpectrumLogic::BinningModes getBinningMode();
+
+    bool setFullWell(SpectrumLogic::FullWellModes mode);
+    SpectrumLogic::FullWellModes getFullWellMode();
+
     void setSaveMode(bool on){ saveMode = on; }
     void setSavingPath(QString path){ savePath = path; }
     QString getSavingPath(){ return savePath; }
     bool isSaveMode(){ return saveMode; }
+    unsigned short* currentBuffer;
+    QDialog* getDialog(){ return dynamic_cast<QDialog*>(dialog);}
 
 signals:
-    void sendBuffer(const unsigned short* buffer);
+    void sendBuffer(unsigned short* buffer);
 
 private:
     SpectrumLogic::SLDevice sl_device;
-    int exposureTime = 50;
+    int exposureTime = 0;
     SpectrumLogic::DeviceInterface sl_iFace{ SpectrumLogic::S2I_GIGE };
     bool saveMode = false;
     QString savePath ="";
+
+    DetectorDialog *dialog;
 
 };
 #endif // DETECTOR_H

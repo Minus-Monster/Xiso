@@ -2,11 +2,12 @@
 
 CGrabber* instance = nullptr;
 int callbackFromGrabber(frameindex_t picNr, void *){
+    qDebug() << "Grabber Call back";
     uchar *buffer = (uchar*)Fg_getImagePtrEx(instance->getFg(), picNr, 0, instance->getDMAOut());
-    QImage outputImage = QImage(buffer, instance->getWidth(), instance->getHeight(), QImage::Format_Grayscale16);
+    QImage outputImage = QImage(buffer, instance->getImageWidth(), instance->getImageHeight(), QImage::Format_Grayscale16);
     emit instance->sendImage(outputImage);
-//    qDebug() << instance->timer->elapsed();
-//    qDebug() << "Callback called a t" << picNr << "My intended" << instance->getSequentialNumFrame();
+    //    qDebug() << instance->timer->elapsed();
+    //    qDebug() << "Callback called a t" << picNr << "My intended" << instance->getSequentialNumFrame();
     if(!instance->isContinuous() && (instance->getSequentialNumFrame() != 0)){
         if(picNr == instance->getSequentialNumFrame()){
             qDebug() << "Called stop grabbing";
@@ -23,7 +24,7 @@ CGrabber::CGrabber(QObject *parent)
     instance = this;
     timer = new QElapsedTimer;
     dialog = new CGrabberDialog;
-    dialog->show();
+    dialog->setGrabber(this);
 }
 
 CGrabber::~CGrabber()
@@ -37,25 +38,30 @@ CGrabber::~CGrabber()
     Fg_FreeGrabber(currentFg);
 }
 
-void CGrabber::loadApplet(QString path)
+bool CGrabber::loadApplet(QString path)
 {
     currentFg = Fg_Init(path.toStdString().c_str(), 0);
     if(currentFg == 0){
         qDebug() << ("Failed to load an applet file." + QString(Fg_getLastErrorDescription(currentFg)));
+        return false;
     }
     qDebug() << path << "is loaded.";
+    return true;
 }
 
-void CGrabber::loadConfiguration(QString path)
+bool CGrabber::loadConfiguration(QString path)
 {
     if(currentFg == nullptr){
         qDebug() << ("Grabber is not initialized.");
+        return false;
     }
     auto error = Fg_loadConfig(currentFg, path.toStdString().c_str());
     if(0 > error){
         qDebug() << ("Grabber couldn't load a configuration file. " + QString(Fg_getErrorDescription(currentFg, error)));
+        return false;
     }
-    qDebug() << (path + " is loaded");
+    qDebug() << (path + " is loaded.");
+    return true;
 }
 
 void CGrabber::initialize()
@@ -78,7 +84,6 @@ void CGrabber::initialize()
     apcData->ctrl.flags = FG_APC_DEFAULTS | FG_APC_IGNORE_STOP | FG_APC_IGNORE_TIMEOUTS | FG_APC_HIGH_PRIORITY;
     apcData->ctrl.timeout = 500000000;
     Fg_registerApcHandler(currentFg, 0, &apcData->ctrl, FG_APC_CONTROL_BASIC);
-
 }
 
 int CGrabber::getDMALength()
@@ -86,43 +91,193 @@ int CGrabber::getDMALength()
     return width*height*bytesperpixel;
 }
 
-void CGrabber::setWidth(int _w){
+bool CGrabber::setOutWidth(int _w){
 
     width = _w;
-
+    auto error = Fg_setParameter(currentFg, FG_WIDTH, &width, 0);
+    if(error != 0 ){
+        qDebug() << "Error :" << Fg_getErrorDescription(currentFg, error);
+        return false;
+    }
+    return true;
 }
 
-void CGrabber::setHeight(int _h){
+int CGrabber::getOutWidth(){
+    int value=0;
+    Fg_getParameter(currentFg, FG_WIDTH, (void*)&value, 0);
+    return value;
+}
+
+bool CGrabber::setOutHeight(int _h){
     height = _h;
+    auto error = Fg_setParameter(currentFg, FG_HEIGHT, &height, 0);
+    if(error != 0 ){
+        qDebug() << "Error :" << Fg_getErrorDescription(currentFg, error);
+        return false;
+    }
+    return true;
+}
+
+int CGrabber::getOutHeight(){
+    int value=0;
+    Fg_getParameter(currentFg, FG_HEIGHT, (void*)&value, 0);
+    return value;
+}
+
+bool CGrabber::setXOffset(int _x)
+{
+    auto error = Fg_setParameter(currentFg, FG_XOFFSET, &_x,0);
+    if(error != 0 ){
+        qDebug() << "Error :" << Fg_getErrorDescription(currentFg, error);
+        return false;
+    }
+    return true;
+}
+
+int CGrabber::getXOffset()
+{
+    int value=0;
+    Fg_getParameter(currentFg, FG_XOFFSET, &value, 0);
+    return value;
+}
+
+bool CGrabber::setYOffset(int _y)
+{
+    auto error = Fg_setParameter(currentFg, FG_YOFFSET, &_y,0);
+    if(error != 0 ){
+        qDebug() << "Error :" << Fg_getErrorDescription(currentFg, error);
+        return false;
+    }
+    return true;
+}
+
+int CGrabber::getYOffset()
+{
+    int value=0;
+    Fg_getParameter(currentFg, FG_YOFFSET, &value, 0);
+    return value;
+}
+
+bool CGrabber::setImageWidth(int _w)
+{
+
+    auto error = Fg_setParameterWithType(currentFg, getParameterId("Device1_Process0_Implementation_ROI_X_Length"), _w, 0);
+    if(error != 0 ){
+        qDebug() << "Error :" << Fg_getErrorDescription(currentFg, error);
+        return false;
+    }
+    return true;
+}
+
+bool CGrabber::setImageHeight(int _h)
+{
+    auto error = Fg_setParameterWithType(currentFg, getParameterId("Device1_Process0_Implementation_ROI_Y_Length"), _h, 0);
+    if(error != 0 ){
+        qDebug() << "Error :" << Fg_getErrorDescription(currentFg, error);
+        return false;
+    }
+    return true;
+}
+
+int CGrabber::getImageWidth()
+{
+    int value=0;
+    Fg_getParameterWithType(currentFg, getParameterId("Device1_Process0_Implementation_ROI_X_Length"), &value, 0);
+    return value;
+}
+
+int CGrabber::getImageHeight()
+{
+    int value=0;
+    Fg_getParameterWithType(currentFg, getParameterId("Device1_Process0_Implementation_ROI_Y_Length"), &value, 0);
+    return value;
 }
 
 bool CGrabber::setROI(int width, int height){
-    int a, b,c,d,e,f,g;
-    a= Fg_setParameterWithType(currentFg, getParameterId("Device1_Process0_Implementation_module133_X_Length"), width, 0);
-    //YLegnth
-    b=Fg_setParameterWithType(currentFg, getParameterId("Device1_Process0_Implementation_module133_Y_Length"), height, 0);
-    //Fg_setParameter(fg, FG_HEIGHT, &m_iHeight, 0);
+    // Width
+    Fg_setParameterWithType(currentFg, getParameterId("Device1_Process0_Implementation_ROI_X_Length"), width, 0);
+    Fg_setParameterWithType(currentFg, getParameterId("Device1_Process0_Implementation_ShadingCorrection_EasyRamLUT_IS_GreaterEqual_Number"), width, 0);
+    Fg_setParameterWithType(currentFg, getParameterId("Device1_Process0_Implementation_SplitLine_LineLength"), width*2, 0); // Split line should be the double of the width.
+    Fg_setParameterWithType(currentFg, getParameterId("Device1_Process0_Implementation_ShadingCorrection_Cal_Data_XLength"), ceil(width / 12), 0);
 
-    // Set Cal XLength
-    unsigned int xLength = width /8;
-    c=Fg_setParameterWithType(currentFg, getParameterId("Device1_Process0_Implementation_ShadingCorrection_Cal_Data_XLength"), xLength, 0);
+    // Height
+    Fg_setParameterWithType(currentFg, getParameterId("Device1_Process0_Implementation_ROI_Y_Length"), height, 0);
+    Fg_setParameterWithType(currentFg, getParameterId("Device1_Process0_Implementation_ShadingCorrection_EasyRamLUT_CreateBlankImage_ImageHeight"), height, 0);
 
-    // Set Cal YLength
-    unsigned int yLength = height;
-    d=Fg_setParameterWithType(currentFg, getParameterId("Device1_Process0_Implementation_ShadingCorrection_Cal_Data_YLength"), yLength, 0);
+    Fg_setParameter(currentFg, FG_WIDTH, &width, 0);
+    Fg_setParameter(currentFg, FG_HEIGHT, &height, 0);
 
-    // Update ROI
-    unsigned int nUpdateROI;
-    nUpdateROI = 1;
-    e=Fg_setParameterWithType(currentFg, getParameterId("Device1_Process0_Implementation_ShadingCorrection_Cal_Data_UpdateROI"), nUpdateROI, 0);
+    return false;
+}
 
-    f=Fg_setParameter(currentFg, FG_WIDTH, &width, 0);
-    g=Fg_setParameter(currentFg, FG_HEIGHT, &height, 0);
-    qDebug() << Fg_getErrorDescription(currentFg,a)<< Fg_getErrorDescription(currentFg,b) << Fg_getErrorDescription(currentFg,c) << Fg_getErrorDescription(currentFg,d) << Fg_getErrorDescription(currentFg,e) << Fg_getErrorDescription(currentFg,f) << Fg_getErrorDescription(currentFg,g);
-
-    if(a || b || c || d || e || f || g){
+bool CGrabber::setShadingCorrectionEnable(bool on)
+{
+    auto error = Fg_setParameterWithType(currentFg, getParameterId("Device1_Process0_Implementation_ShadingCorrection_Shading_Enable_Value"), on, 0);
+    if(error != 0 ){
+        qDebug() << "Error :" << Fg_getErrorDescription(currentFg, error);
         return false;
-    }else return true;
+    }
+    return true;
+}
+
+bool CGrabber::getShadingCorrectionEnable()
+{
+    int value=0;
+    Fg_getParameterWithType(currentFg, getParameterId("Device1_Process0_Implementation_ShadingCorrection_Shading_Enable_Value"), &value, 0);
+    return value;
+}
+// Device1_Process0_Implementation_ShadingCorrection_Shading_OverSaturation_Value=1200;
+bool CGrabber::setOverSaturation(int _v)
+{
+    auto error =Fg_setParameterWithType(currentFg, getParameterId("Device1_Process0_Implementation_ShadingCorrection_Shading_OverSaturation_Value"), _v, 0);
+    if(error != 0 ){
+        qDebug() << "Error :" << Fg_getErrorDescription(currentFg, error);
+        return false;
+    }
+    return true;
+}
+
+int CGrabber::getOverSaturation()
+{
+    int value=0;
+    Fg_getParameterWithType(currentFg, getParameterId("Device1_Process0_Implementation_ShadingCorrection_Shading_OverSaturation_Value"), &value, 0);
+    return value;
+}
+//Device1_Process0_Implementation_ShadingCorrection_EasyRamLUT_mE6RamLUT_InitFileName
+bool CGrabber::setLUTFileName(QString fileName)
+{
+    auto error = Fg_setParameterWithType(currentFg, getParameterId("Device1_Process0_Implementation_ShadingCorrection_EasyRamLUT_mE6RamLUT_InitFileName"), fileName.toStdString(), 0);
+    if(error != 0 ){
+        qDebug() << "Error :" << Fg_getErrorDescription(currentFg, error);
+        return false;
+    }
+    return true;
+}
+
+QString CGrabber::getLUTFileName()
+{
+    std::string value;
+    Fg_getParameterWithType(currentFg, getParameterId("Device1_Process0_Implementation_ShadingCorrection_EasyRamLUT_mE6RamLUT_InitFileName"), value, 0);
+
+    return QString::fromStdString(value);
+}
+
+//Device1_Process0_Implementation_ShadingCorrection_EasyRamLUT_mE6RamLUT_LoadInitFile=1;
+bool CGrabber::setInitFile(bool on)
+{
+    auto error = Fg_setParameterWithType(currentFg, getParameterId("Device1_Process0_Implementation_ShadingCorrection_EasyRamLUT_mE6RamLUT_LoadInitFile"), on, 0);
+    if(error != 0 ){
+        qDebug() << "Error :" << Fg_getErrorDescription(currentFg, error);
+        return false;
+    }
+    return true;
+
+}
+bool CGrabber::getInitFile()
+{
+    int value=0;
+    Fg_getParameterWithType(currentFg, getParameterId("Device1_Process0_Implementation_ShadingCorrection_EasyRamLUT_mE6RamLUT_LoadInitFile"), &value, 0);
+    return value;
 }
 
 int CGrabber::getParameterId(QString parameter)
@@ -171,7 +326,7 @@ void CGrabber::stopGrabbing()
     qDebug() << "Stop grabbing result : " << a << "and" << b;
 }
 
-void CGrabber::convertToGrabberImage(const unsigned short *buffer)
+void CGrabber::convertToGrabberImage(unsigned short *buffer)
 {
     if(isRunning){
         timer->restart();

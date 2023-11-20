@@ -58,7 +58,10 @@
     </widget>
    </item>
    <item row="1" column="0">
-    <widget class="QGroupBox" name="groupBox_2">
+    <widget class="QGroupBox" name="groupBox_roi">
+     <property name="enabled">
+      <bool>false</bool>
+     </property>
      <property name="title">
       <string>ROI</string>
      </property>
@@ -148,7 +151,10 @@
     </widget>
    </item>
    <item row="2" column="0">
-    <widget class="QGroupBox" name="groupBox_3">
+    <widget class="QGroupBox" name="groupBox_userConfig">
+     <property name="enabled">
+      <bool>false</bool>
+     </property>
      <property name="title">
       <string>User Configuration</string>
      </property>
@@ -156,10 +162,10 @@
       <item row="0" column="0">
        <widget class="QCheckBox" name="checkBox_SCEnable">
         <property name="layoutDirection">
-         <enum>Qt::RightToLeft</enum>
+         <enum>Qt::LeftToRight</enum>
         </property>
         <property name="text">
-         <string>Shading Correction Enable</string>
+         <string>Shading Correction</string>
         </property>
         <property name="tristate">
          <bool>false</bool>
@@ -171,12 +177,16 @@
         <item>
          <widget class="QLabel" name="label_5">
           <property name="text">
-           <string>Shading Correction Over saturation</string>
+           <string>Over Saturation</string>
           </property>
          </widget>
         </item>
         <item>
-         <widget class="QSpinBox" name="spinBox_SCOverSaturation"/>
+         <widget class="QSpinBox" name="spinBox_SCOverSaturation">
+          <property name="maximum">
+           <number>999999999</number>
+          </property>
+         </widget>
         </item>
        </layout>
       </item>
@@ -197,7 +207,7 @@
       <item row="3" column="0">
        <widget class="QCheckBox" name="checkBox_loadInitFile">
         <property name="layoutDirection">
-         <enum>Qt::RightToLeft</enum>
+         <enum>Qt::LeftToRight</enum>
         </property>
         <property name="text">
          <string>Load an init file</string>

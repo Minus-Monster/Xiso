@@ -4,7 +4,7 @@
 #include <QMainWindow>
 #include <QElapsedTimer>
 #include "GraphicsWidget.h"
-#include "Modules/DebugConsole.h"
+//#include "Modules/DebugConsole.h"
 
 #include "Detector.h"
 #include "CGrabber.h"
@@ -38,7 +38,7 @@ signals:
 private:
     Ui::MainWindow *ui;
     Qylon::GraphicsWidget *widget;
-    Qylon::DebugConsole *console;
+//    Qylon::DebugConsole *console;
     QVBoxLayout *layout;
     CGrabber *grabber;
     Detector *detector;

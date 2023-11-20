@@ -18,12 +18,12 @@ MainWindow::MainWindow(QWidget *parent)
     widget->initialize();
     layout->addWidget(widget);
     ui->frame->setLayout(layout);
-    console = new Qylon::DebugConsole;
-    ui->formLayout->addRow(console);
+
     ui->dockWidget_debug->setVisible(true);
+    ui->dockWidget_panel->setVisible(false);
 
 
-    connect(ui->actionDebug_Console, &QAction::triggered, this, [this](bool on){ this->ui->dockWidget_debug->setVisible(on);});
+
     connect(ui->actionPanel, &QAction::triggered, this, [this](bool on){this->ui->dockWidget_panel->setVisible(on);});
     connect(ui->dockWidget_panel, &QDockWidget::visibilityChanged, this, [this](bool on){this->ui->actionPanel->setChecked(on);});
     connect(ui->pushButton_Sequential, &QPushButton::clicked, this, [this](){
@@ -556,22 +556,10 @@ MainWindow::~MainWindow()
 void MainWindow::setGrabber(CGrabber *c)
 {
     grabber = c;
+    ui->formLayout_grabber->addRow(grabber->getDialog());
     connect(grabber, &CGrabber::sendImage, this, [this](QImage image){
         this->widget->setImage(image);
         ui->statusbar->showMessage("Elapsed time : " + QString::number(timer->restart()));
-    });
-    connect(ui->pushButton_GrabberInitialize, &QPushButton::clicked, this, [this](){
-        //        auto applet = QFileDialog::getOpenFileName(this, "Load an applet", QDir::homePath(), "*.hap *.dll");
-        //        if(applet.isEmpty()) return;
-        //        auto config = QFileDialog::getOpenFileName(this, "Load a configuration file", QDir::homePath(), "*.mcf");
-        //        if(config.isEmpty()) return;
-        //        grabber->loadApplet(applet);
-        //        grabber->loadConfiguration(config);
-        grabber->loadApplet("C:/Program Files/Basler/FramegrabberSDK/Hardware Applets/IMP-CX-4S/Innometry_10G_Project.hap");
-        grabber->loadConfiguration("C:/Users/minwoo/Desktop/Minu/Xiso/Inno.mcf");
-        grabber->initialize();
-
-        QMessageBox::information(this, "Basler Framegrabber", "Loading is finished.");
     });
     connect(ui->pushButton_ResetGrabber, &QPushButton::clicked, this, [this](){
         this->grabber->stopGrabbing();
@@ -581,63 +569,23 @@ void MainWindow::setGrabber(CGrabber *c)
 void MainWindow::setDetector(Detector *d)
 {
     detector = d;
-    ui->comboBox_BinningMode->setCurrentText("1X1");
-    connect(ui->pushButton_DetectorInitialize, &QPushButton::clicked, this, [this](){
-        detector->initialize();
-        detector->setROI(ui->spinBox_width->value(), ui->spinBox_height->value(), 0, 0);
-        detector->setExposureMode(SpectrumLogic::ExposureModes::fps25_mode);
-        detector->setExposureTime(50);
-        QMessageBox::information(this, "XView", "Detector is intialized.");
-    });
-    connect(ui->pushButton_roiApply, &QPushButton::clicked, this, [this](bool on){
-        qDebug() << "button clicked";
-        bool failed = detector->setROI(ui->spinBox_width->value(), ui->spinBox_height->value(),0,0);
-        if(failed) QMessageBox::information(this, "XView", "It can't put ROI values in the detector");
-        bool succeed = grabber->setROI(ui->spinBox_width->value(), ui->spinBox_height->value());
-        if(!succeed) QMessageBox::information(this, "Basler Framegrabber", "ROI can't apply in the grabber.");
-        else QMessageBox::information(this, "Xiso", "Setting ROI is done.");
-    });
-    connect(ui->pushButton_detectorApply, &QPushButton::clicked, this, [this](){
-        qDebug() << "Exposure Time : " << ui->spinBox_Exposure->value();
-        qDebug() << "Expousre Mode : " << ui->comboBox_exposureMode->currentText();
-        qDebug() << "Binning Mode : " << ui->comboBox_BinningMode->currentText();
-        int expTime = ui->spinBox_Exposure->value();
-        QString exMode = ui->comboBox_exposureMode->currentText();
-        QString binning = ui->comboBox_BinningMode->currentText();
-        bool error = false;
-        if(binning == "1X1"){
-            error = detector->setBinningMode(SpectrumLogic::BinningModes::x11);
-        }else if(binning == "2X2"){
-            error = detector->setBinningMode(SpectrumLogic::BinningModes::x22);
-        }else if(binning == "4X4"){
-            error = detector->setBinningMode(SpectrumLogic::BinningModes::x44);
-        }else if(binning == "Unknown"){
-            error = detector->setBinningMode(SpectrumLogic::BinningModes::BinningUnknown);
-        }
-        if(!error) QMessageBox::information(this, "XViewer", "Binning mode is not applied.");
+//    connect(d, &Detector::sendBuffer, this, [this](unsigned short* buf){
+//        qDebug() << "Grabbed data. start converting";
+//        QImage *img = new QImage((unsigned char*)buf, 2400, 600, QImage::Format_Grayscale16);
 
-        if(exMode == "FPS25"){
-            error = this->detector->setExposureMode(SpectrumLogic::ExposureModes::fps25_mode);
-        }else if(exMode == "FPS30"){
-            error = this->detector->setExposureMode(SpectrumLogic::ExposureModes::fps30_mode);
-        }else if(exMode== "TRIG"){
-            error = this->detector->setExposureMode(SpectrumLogic::ExposureModes::trig_mode);
-        }else if(exMode == "XFPS"){
-            error = this->detector->setExposureMode(SpectrumLogic::ExposureModes::xfps_mode);
-        }else if(exMode == "SEQ"){
-            error = this->detector->setExposureMode(SpectrumLogic::ExposureModes::seq_mode);
-        }
-        if(!error) QMessageBox::information(this, "XViewer", "Exposure Mode is not applied.");
+//        img->save("C:/5608/qt.tiff");
 
-        error = this->detector->setExposureTime(expTime);
-        if(!error) QMessageBox::information(this, "XViewer", "Exposure time is not applied.");
+//        this->widget->setImage(*img);
+//    });
 
-    });
+//    detector->getDialog()->show();
+    ui->formLayout_detector->addRow(detector->getDialog());
 }
 
 void MainWindow::setMessage(QString message)
 {
-    console->append(message);
+    //    console->append(message);
+    ui->textEdit->append(message);
 }
 
 

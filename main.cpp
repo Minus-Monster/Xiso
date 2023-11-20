@@ -1,14 +1,15 @@
-#include "Qylon.h"
+//#include "Qylon.h"
 #include "mainwindow.h"
 #include "Detector.h"
 #include "CGrabber.h"
 #include <QApplication>
 #include <QFileDialog>
+#include <QTime>
 
 MainWindow* window = nullptr;
 void setDebugMessage(QtMsgType type, const QMessageLogContext &conText, const QString &msg)
 {
-    window->setMessage(msg);
+    window->setMessage("[" + QTime::currentTime().toString() + "] " + msg);
 }
 
 int main(int argc, char *argv[])
@@ -23,6 +24,7 @@ int main(int argc, char *argv[])
 
     Detector *d = new Detector;
     w.setDetector(d);
+    // Need to send the grabber
     QObject::connect(d, &Detector::sendBuffer, g, &CGrabber::convertToGrabberImage);
     QObject::connect(&w, &MainWindow::grabbingStart, d, [d, g](int num){
         if(num==0){
