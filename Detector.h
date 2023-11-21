@@ -49,6 +49,8 @@ public:
 
 signals:
     void sendBuffer(unsigned short* buffer);
+    void sendImage(const QImage &image);
+    void updateInformation();
 
 private:
     SpectrumLogic::SLDevice sl_device;

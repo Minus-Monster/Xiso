@@ -123,3 +123,61 @@ DetectorDialog::~DetectorDialog()
     delete ui;
 }
 
+void DetectorDialog::updateInformation()
+{
+    ui->spinBox_exposureTime->setValue(this->detector->getExposureTime());
+    //    ui->comboBox_exposureMode
+    auto exMode = this->detector->getExposureMode();
+    switch(exMode){
+    case SpectrumLogic::ExposureModes::fps25_mode:{
+        ui->comboBox_exposureMode->setCurrentText("FPS25");
+        break;
+    }case SpectrumLogic::ExposureModes::fps30_mode:{
+        ui->comboBox_exposureMode->setCurrentText("FPS30");
+        break;
+    }case SpectrumLogic::ExposureModes::trig_mode:{
+        ui->comboBox_exposureMode->setCurrentText("TRIG");
+        break;
+    }case SpectrumLogic::ExposureModes::seq_mode:{
+        ui->comboBox_exposureMode->setCurrentText("SEQ");
+        break;
+    }case SpectrumLogic::ExposureModes::xfps_mode:{
+        ui->comboBox_exposureMode->setCurrentText("XFPS");
+        break;
+    }}
+    auto binning = this->detector->getBinningMode();
+    switch(binning){
+    case SpectrumLogic::BinningModes::x11:{
+        ui->comboBox_binningMode->setCurrentText("1X1");
+        break;
+    }case SpectrumLogic::BinningModes::x22:{
+        ui->comboBox_binningMode->setCurrentText("2X2");
+        break;
+    }case SpectrumLogic::BinningModes::x44:{
+        ui->comboBox_binningMode->setCurrentText("4X4");
+        break;
+    }case SpectrumLogic::BinningModes::BinningUnknown:{
+        ui->comboBox_binningMode->setCurrentText("Unknown");
+    }default:{
+
+    }}
+    auto fullwell = this->detector->getFullWellMode();
+    switch(fullwell){
+    case SpectrumLogic::FullWellModes::High:{
+        ui->comboBox_fullwell->setCurrentText("High");
+        break;
+    }case SpectrumLogic::FullWellModes::Low:{
+        ui->comboBox_fullwell->setCurrentText("Low");
+        break;
+    }case SpectrumLogic::FullWellModes::Unknown:{
+        ui->comboBox_fullwell->setCurrentText("Unknown");
+        break;
+    }
+    }
+
+    ui->spinBox_width->setValue(this->detector->getWidth());
+    ui->spinBox_height->setValue(this->detector->getHeight());
+    ui->spinBox_x->setValue(this->detector->getX());
+    ui->spinBox_y->setValue(this->detector->getY());
+}
+

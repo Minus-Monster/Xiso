@@ -2,7 +2,6 @@
 
 CGrabber* instance = nullptr;
 int callbackFromGrabber(frameindex_t picNr, void *){
-    qDebug() << "Grabber Call back";
     uchar *buffer = (uchar*)Fg_getImagePtrEx(instance->getFg(), picNr, 0, instance->getDMAOut());
     QImage outputImage = QImage(buffer, instance->getImageWidth(), instance->getImageHeight(), QImage::Format_Grayscale16);
     emit instance->sendImage(outputImage);
@@ -25,6 +24,7 @@ CGrabber::CGrabber(QObject *parent)
     timer = new QElapsedTimer;
     dialog = new CGrabberDialog;
     dialog->setGrabber(this);
+    connect(this, &CGrabber::updateInformation, dialog, &CGrabberDialog::updateInformation);
 }
 
 CGrabber::~CGrabber()
@@ -99,6 +99,7 @@ bool CGrabber::setOutWidth(int _w){
         qDebug() << "Error :" << Fg_getErrorDescription(currentFg, error);
         return false;
     }
+    emit updateInformation();
     return true;
 }
 
@@ -115,6 +116,7 @@ bool CGrabber::setOutHeight(int _h){
         qDebug() << "Error :" << Fg_getErrorDescription(currentFg, error);
         return false;
     }
+    emit updateInformation();
     return true;
 }
 
@@ -131,6 +133,7 @@ bool CGrabber::setXOffset(int _x)
         qDebug() << "Error :" << Fg_getErrorDescription(currentFg, error);
         return false;
     }
+    emit updateInformation();
     return true;
 }
 
@@ -148,6 +151,7 @@ bool CGrabber::setYOffset(int _y)
         qDebug() << "Error :" << Fg_getErrorDescription(currentFg, error);
         return false;
     }
+    emit updateInformation();
     return true;
 }
 
@@ -161,21 +165,27 @@ int CGrabber::getYOffset()
 bool CGrabber::setImageWidth(int _w)
 {
 
+    Fg_setParameterWithType(currentFg, getParameterId("Device1_Process0_Implementation_ShadingCorrection_EasyRamLUT_IS_GreaterEqual_Number"), _w, 0);
+    Fg_setParameterWithType(currentFg, getParameterId("Device1_Process0_Implementation_SplitLine_LineLength"), _w*2, 0); // Split line should be the double of the width.
+    Fg_setParameterWithType(currentFg, getParameterId("Device1_Process0_Implementation_ShadingCorrection_Cal_Data_XLength"), ceil(_w / 12), 0);
     auto error = Fg_setParameterWithType(currentFg, getParameterId("Device1_Process0_Implementation_ROI_X_Length"), _w, 0);
     if(error != 0 ){
         qDebug() << "Error :" << Fg_getErrorDescription(currentFg, error);
         return false;
     }
+    emit updateInformation();
     return true;
 }
 
 bool CGrabber::setImageHeight(int _h)
 {
+    Fg_setParameterWithType(currentFg, getParameterId("Device1_Process0_Implementation_ShadingCorrection_EasyRamLUT_CreateBlankImage_ImageHeight"), _h, 0);
     auto error = Fg_setParameterWithType(currentFg, getParameterId("Device1_Process0_Implementation_ROI_Y_Length"), _h, 0);
     if(error != 0 ){
         qDebug() << "Error :" << Fg_getErrorDescription(currentFg, error);
         return false;
     }
+    emit updateInformation();
     return true;
 }
 
@@ -193,22 +203,6 @@ int CGrabber::getImageHeight()
     return value;
 }
 
-bool CGrabber::setROI(int width, int height){
-    // Width
-    Fg_setParameterWithType(currentFg, getParameterId("Device1_Process0_Implementation_ROI_X_Length"), width, 0);
-    Fg_setParameterWithType(currentFg, getParameterId("Device1_Process0_Implementation_ShadingCorrection_EasyRamLUT_IS_GreaterEqual_Number"), width, 0);
-    Fg_setParameterWithType(currentFg, getParameterId("Device1_Process0_Implementation_SplitLine_LineLength"), width*2, 0); // Split line should be the double of the width.
-    Fg_setParameterWithType(currentFg, getParameterId("Device1_Process0_Implementation_ShadingCorrection_Cal_Data_XLength"), ceil(width / 12), 0);
-
-    // Height
-    Fg_setParameterWithType(currentFg, getParameterId("Device1_Process0_Implementation_ROI_Y_Length"), height, 0);
-    Fg_setParameterWithType(currentFg, getParameterId("Device1_Process0_Implementation_ShadingCorrection_EasyRamLUT_CreateBlankImage_ImageHeight"), height, 0);
-
-    Fg_setParameter(currentFg, FG_WIDTH, &width, 0);
-    Fg_setParameter(currentFg, FG_HEIGHT, &height, 0);
-
-    return false;
-}
 
 bool CGrabber::setShadingCorrectionEnable(bool on)
 {
@@ -217,6 +211,7 @@ bool CGrabber::setShadingCorrectionEnable(bool on)
         qDebug() << "Error :" << Fg_getErrorDescription(currentFg, error);
         return false;
     }
+    emit updateInformation();
     return true;
 }
 
@@ -224,6 +219,59 @@ bool CGrabber::getShadingCorrectionEnable()
 {
     int value=0;
     Fg_getParameterWithType(currentFg, getParameterId("Device1_Process0_Implementation_ShadingCorrection_Shading_Enable_Value"), &value, 0);
+    return value;
+}//Device1_Process0_Implementation_DeadPixelInterpolation_Enable_Value
+bool CGrabber::setDeadPixelInterpolation(bool on)
+{
+    auto error = Fg_setParameterWithType(currentFg, getParameterId("Device1_Process0_Implementation_DeadPixelInterpolation_Enable_Value"), on, 0);
+    if(error != 0 ){
+        qDebug() << "Error :" << Fg_getErrorDescription(currentFg, error);
+        return false;
+    }
+    emit updateInformation();
+    return true;
+}
+
+bool CGrabber::getDeadPixelInterpolation()
+{
+    int value=0;
+    Fg_getParameterWithType(currentFg, getParameterId("Device1_Process0_Implementation_DeadPixelInterpolation_Enable_Value"), &value, 0);
+    return value;
+}
+//Device1_Process0_Implementation_Remove_Dark_Line_H_Enable_Value
+bool CGrabber::setRemovingDarkH(bool on)
+{
+    auto error = Fg_setParameterWithType(currentFg, getParameterId("Device1_Process0_Implementation_Remove_Dark_Line_H_Enable_Value"), on, 0);
+    if(error != 0 ){
+        qDebug() << "Error :" << Fg_getErrorDescription(currentFg, error);
+        return false;
+    }
+    emit updateInformation();
+    return true;
+}
+
+bool CGrabber::getRemovingDarkH()
+{
+    int value=0;
+    Fg_getParameterWithType(currentFg, getParameterId("Device1_Process0_Implementation_Remove_Dark_Line_H_Enable_Value"), &value, 0);
+    return value;
+}
+//Device1_Process0_Implementation_Remove_Dark_Line_Enable_Value
+bool CGrabber::setRemovingDarkV(bool on)
+{
+    auto error = Fg_setParameterWithType(currentFg, getParameterId("Device1_Process0_Implementation_Remove_Dark_Line_Enable_Value"), on, 0);
+    if(error != 0 ){
+        qDebug() << "Error :" << Fg_getErrorDescription(currentFg, error);
+        return false;
+    }
+    emit updateInformation();
+    return true;
+}
+
+bool CGrabber::getRemovingDarkV()
+{
+    int value=0;
+    Fg_getParameterWithType(currentFg, getParameterId("Device1_Process0_Implementation_Remove_Dark_Line_Enable_Value"), &value, 0);
     return value;
 }
 // Device1_Process0_Implementation_ShadingCorrection_Shading_OverSaturation_Value=1200;
@@ -234,6 +282,7 @@ bool CGrabber::setOverSaturation(int _v)
         qDebug() << "Error :" << Fg_getErrorDescription(currentFg, error);
         return false;
     }
+    emit updateInformation();
     return true;
 }
 
@@ -251,6 +300,7 @@ bool CGrabber::setLUTFileName(QString fileName)
         qDebug() << "Error :" << Fg_getErrorDescription(currentFg, error);
         return false;
     }
+    emit updateInformation();
     return true;
 }
 
@@ -270,6 +320,7 @@ bool CGrabber::setInitFile(bool on)
         qDebug() << "Error :" << Fg_getErrorDescription(currentFg, error);
         return false;
     }
+    emit updateInformation();
     return true;
 
 }
@@ -292,6 +343,8 @@ void CGrabber::setCalibMode(bool on)
     Fg_setParameterWithType(currentFg, getParameterId("Device1_Process0_Implementation_Remove_Dark_Line_Enable_Value"), on, 0);
     Fg_setParameterWithType(currentFg, getParameterId("Device1_Process0_Implementation_Remove_Dark_Line_H_Enable_Value"), on, 0);
     Sleep(100);
+    emit updateInformation();
+
 }
 
 void CGrabber::sequentialGrabbing(int numFrame)
@@ -301,7 +354,7 @@ void CGrabber::sequentialGrabbing(int numFrame)
     sequentialNumFrame = numFrame;
     auto a = Fg_AcquireEx(currentFg, 0, numFrame, ACQ_STANDARD, DMAOut);
     auto b= Fg_AcquireEx(currentFg, 1, numFrame+1, ACQ_STANDARD, DMAInverse);
-    qDebug() << "Grabbing result : " << a << "and" << b;
+    qDebug() << "Sequential Grabbing command result DMA0:" << Fg_getErrorDescription(currentFg, a) << "DMA1:" << Fg_getErrorDescription(currentFg,b);
 }
 
 void CGrabber::continuousGrabbing()
@@ -311,7 +364,7 @@ void CGrabber::continuousGrabbing()
     sequentialNumFrame = 0;
     auto a = Fg_AcquireEx(currentFg, 0, GRAB_INFINITE, ACQ_STANDARD, DMAOut);
     auto b= Fg_AcquireEx(currentFg, 1, GRAB_INFINITE, ACQ_STANDARD, DMAInverse);
-    qDebug() << "Grabbing result : " << a << "and" << b;
+    qDebug() << "Continuous Grabbing command result DMA0:" << Fg_getErrorDescription(currentFg, a) << "DMA1:" << Fg_getErrorDescription(currentFg,b);
 
 }
 
@@ -323,7 +376,7 @@ void CGrabber::stopGrabbing()
 
     auto a = Fg_stopAcquireEx(currentFg, 0, DMAOut, 0);
     auto b = Fg_stopAcquireEx(currentFg, 1, DMAInverse, 0);
-    qDebug() << "Stop grabbing result : " << a << "and" << b;
+    qDebug() << "Stop Grabbing command result DMA0:" << Fg_getErrorDescription(currentFg, a) << "DMA1:" << Fg_getErrorDescription(currentFg,b);
 }
 
 void CGrabber::convertToGrabberImage(unsigned short *buffer)

@@ -44,10 +44,21 @@ public:
     int getImageWidth();
     int getImageHeight();
 
-    bool setROI(int width, int height);
-
     bool setShadingCorrectionEnable(bool on);
     bool getShadingCorrectionEnable();
+
+    bool setDeadPixelInterpolation(bool on);
+    bool getDeadPixelInterpolation();
+
+    bool setRemovingDarkH(bool on);
+    bool getRemovingDarkH();
+
+    bool setRemovingDarkV(bool on);
+    bool getRemovingDarkV();
+
+
+
+
 
     bool setOverSaturation(int _v);
     int getOverSaturation();
@@ -78,6 +89,7 @@ public slots:
     void convertToGrabberImage(unsigned short *buffer);
 
 signals:
+    void updateInformation();
     void sendImage(const QImage &image);
 
 private:

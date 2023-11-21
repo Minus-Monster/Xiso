@@ -6,6 +6,7 @@
 #include <fstream>
 #include <QTextBlock>
 #include <QTextCursor>
+#include <QMetaObject>
 
 MainWindow::MainWindow(QWidget *parent)
     : QMainWindow(parent)
@@ -20,31 +21,40 @@ MainWindow::MainWindow(QWidget *parent)
     ui->frame->setLayout(layout);
 
     ui->dockWidget_debug->setVisible(true);
-    ui->dockWidget_panel->setVisible(false);
 
 
-
-    connect(ui->actionPanel, &QAction::triggered, this, [this](bool on){this->ui->dockWidget_panel->setVisible(on);});
-    connect(ui->dockWidget_panel, &QDockWidget::visibilityChanged, this, [this](bool on){this->ui->actionPanel->setChecked(on);});
+    connect(ui->actionPanel, &QAction::triggered, ui->dockWidget_panel, &QDockWidget::setVisible);
+    connect(ui->actionDebug_Console, &QAction::triggered, ui->dockWidget_debug, &QDockWidget::setVisible);
+    connect(ui->actionDetector_Settings, &QAction::triggered, ui->dockWidget_detector, &QDockWidget::setVisible);
+    connect(ui->actionGrabber_Settings, &QAction::triggered, ui->dockWidget_grabber, &QDockWidget::setVisible);
+    // Sequential grabbing
     connect(ui->pushButton_Sequential, &QPushButton::clicked, this, [this](){
         int cnt = ui->spinBox_Sequential->value();
-        ui->comboBox_exposureMode->setCurrentText("SEQ");
+        this->detector->setExposureMode(SpectrumLogic::ExposureModes::seq_mode);
         timer->start();
         emit grabbingStart(cnt);
+
+        //        this->grabber->continuousGrabbing();
+        //        QImage *img = new QImage("C:/Users/minwoo/Desktop/Minu/Xiso/noCal.tif");
+        //        this->grabber->convertToGrabberImage((unsigned short*)img->bits());
+
     });
+    // Continuous grabbing
     connect(ui->pushButton_Continuous, &QPushButton::clicked, this, [this](bool on){
-        if(on){
-            emit grabbingStart();
-
-        }else emit grabbingFinished();
+        if(on) emit grabbingStart();
+        else emit grabbingFinished();
+        timer->start();
     });
-
-
+    // Reset
+    connect(ui->pushButton_reset, &QPushButton::clicked, this, [this](){
+        emit grabbingFinished();
+        timer->elapsed();
+    });
+    // Dark calib
     connect(ui->pushButton_dark, &QPushButton::clicked, this, [this](){
         QString path = QFileDialog::getExistingDirectory(this, "Select a directory to save", QDir::homePath());
         if(path == "") return;
         darkCalPath = path;
-
         grabber->setCalibMode(false);
         // Grabbing x images
         detector->setSaveMode(true);
@@ -55,6 +65,7 @@ MainWindow::MainWindow(QWidget *parent)
         grabber->setCalibMode(true);
         detector->setSaveMode(false);
     });
+    // bright calib
     connect(ui->pushButton_bright, &QPushButton::clicked, this, [this](){
         QString path = QFileDialog::getExistingDirectory(this, "Select a directory to save", QDir::homePath());
         if(path == "") return;
@@ -69,6 +80,7 @@ MainWindow::MainWindow(QWidget *parent)
         grabber->setCalibMode(true);
         detector->setSaveMode(false);
     });
+    // calib out
     connect(ui->pushButton_out, &QPushButton::clicked, this, [this](){
         // Test Function now
         /*
@@ -127,8 +139,6 @@ MainWindow::MainWindow(QWidget *parent)
         back.save(darkCalPath +"/BB.tiff");
         */
 
-
-
         SisoIoImageEngine* imageHandle0 = NULL;
         int m_iWidth = this->ui->spinBox_width->value(); // Need to edit
         int m_iHeight = this->ui->spinBox_height->value(); // Need to edit
@@ -163,19 +173,40 @@ MainWindow::MainWindow(QWidget *parent)
         memset(AveImg, 0, m_iWidth * m_iHeight * nByte);
 
         qDebug() << nAvgCount;
-        for (int n = 0; n < 2; n++){
+        for (int n = 0; n < nAvgCount; n++){
             auto error = IoImageOpen((darkCalPath + "/DarkRaw" + QString::number(n) + ".tiff").toStdString().c_str(), &imageHandle0);
             if(error == 0){
                 Temp = (unsigned short*)IoImageGetData(imageHandle0);
 
                 for (int i = 0; i < m_iHeight; i++){
                     for (int j = 0; j < m_iWidth; j++){
-                        Temp1[i * m_iWidth + j] += (Temp[i * m_iWidth + j]);
+                        if(n < 2){
+                            Temp1[i * m_iWidth + j] += (Temp[i * m_iWidth + j]);
+                        }else if(n>=2 && n < 4){
+                            Temp2[i * m_iWidth + j] += (Temp[i * m_iWidth + j]);
+                        }else if(n>=4 && n < 6){
+                            Temp3[i * m_iWidth + j] += (Temp[i * m_iWidth + j]);
+                        }else if(n>=6 && n < 8){
+                            Temp4[i * m_iWidth + j] += (Temp[i * m_iWidth + j]);
+                        }else if(n>=8 && n < 10){
+                            Temp5[i * m_iWidth + j] += (Temp[i * m_iWidth + j]);
+                        }else if(n>=10 && n < 12){
+                            Temp6[i * m_iWidth + j] += (Temp[i * m_iWidth + j]);
+                        }else if(n>= 12 && n < 14){
+                            Temp7[i * m_iWidth + j] += (Temp[i * m_iWidth + j]);
+                        }else if(n>= 14 && n < 16){
+                            Temp8[i * m_iWidth + j] += (Temp[i * m_iWidth + j]);
+                        }else{
+                            qDebug() << "Out of index";
+                        }
                     }
                 }
             }
         }
         IoFreeImage(imageHandle0);
+        imageHandle0 = NULL;
+
+        /*
         imageHandle0 = NULL;
         for (int n = 2; n < 4; n++){
             auto error = IoImageOpen((darkCalPath + "/DarkRaw" + QString::number(n) + ".tiff").toStdString().c_str(), &imageHandle0);
@@ -185,7 +216,6 @@ MainWindow::MainWindow(QWidget *parent)
 
                 for (int i = 0; i < m_iHeight; i++){
                     for (int j = 0; j < m_iWidth; j++){
-                        Temp2[i * m_iWidth + j] += (Temp[i * m_iWidth + j]);
                     }
                 }
             }
@@ -200,7 +230,6 @@ MainWindow::MainWindow(QWidget *parent)
 
                 for (int i = 0; i < m_iHeight; i++){
                     for (int j = 0; j < m_iWidth; j++){
-                        Temp3[i * m_iWidth + j] += (Temp[i * m_iWidth + j]);
                     }
                 }
             }
@@ -215,7 +244,6 @@ MainWindow::MainWindow(QWidget *parent)
 
                 for (int i = 0; i < m_iHeight; i++){
                     for (int j = 0; j < m_iWidth; j++){
-                        Temp4[i * m_iWidth + j] += (Temp[i * m_iWidth + j]);
                     }
                 }
             }
@@ -230,7 +258,6 @@ MainWindow::MainWindow(QWidget *parent)
 
                 for (int i = 0; i < m_iHeight; i++){
                     for (int j = 0; j < m_iWidth; j++){
-                        Temp5[i * m_iWidth + j] += (Temp[i * m_iWidth + j]);
                     }
                 }
             }
@@ -245,7 +272,6 @@ MainWindow::MainWindow(QWidget *parent)
 
                 for (int i = 0; i < m_iHeight; i++){
                     for (int j = 0; j < m_iWidth; j++){
-                        Temp6[i * m_iWidth + j] += (Temp[i * m_iWidth + j]);
                     }
                 }
             }
@@ -260,7 +286,6 @@ MainWindow::MainWindow(QWidget *parent)
 
                 for (int i = 0; i < m_iHeight; i++){
                     for (int j = 0; j < m_iWidth; j++){
-                        Temp7[i * m_iWidth + j] += (Temp[i * m_iWidth + j]);
                     }
                 }
             }
@@ -275,11 +300,11 @@ MainWindow::MainWindow(QWidget *parent)
 
                 for (int i = 0; i < m_iHeight; i++){
                     for (int j = 0; j < m_iWidth; j++){
-                        Temp8[i * m_iWidth + j] += (Temp[i * m_iWidth + j]);
                     }
                 }
             }
         }
+*/
         for (int i = 0; i < m_iHeight; i++){
             for (int j = 0; j < m_iWidth; j++){
                 AveImg[i * m_iWidth + j] = ((Temp1[i * m_iWidth + j]) + (Temp2[i * m_iWidth + j]) + (Temp3[i * m_iWidth + j])+(Temp4[i * m_iWidth + j])+ (Temp5[i * m_iWidth + j])+ (Temp6[i * m_iWidth + j])+ (Temp7[i * m_iWidth + j])+ (Temp8[i * m_iWidth + j])) / nAvgCount;
@@ -295,124 +320,111 @@ MainWindow::MainWindow(QWidget *parent)
                 cal_Data1[i * m_iWidth + j] = AveImg[i * m_iWidth + j] / 256;   //BIT SHIFT 2^8=256 ->  (Bit15 ~ Bit8)
             }
         }
-
         IoWriteTiff((darkCalPath + "/D1.tiff").toStdString().c_str(), cal_Data0, m_iWidth, m_iHeight, 8, 1);
         IoWriteTiff((darkCalPath + "/D2.tiff").toStdString().c_str(), cal_Data1, m_iWidth, m_iHeight, 8, 1);
 
-        //        memset(Temp, 0, m_iWidth * m_iHeight * nByte);
-        //        memset(Temp1, 0, m_iWidth * m_iHeight * nByte);
-        //        memset(AveImg, 0, m_iWidth * m_iHeight * nByte);
-        //        IoFreeImage(imageHandle0);
-        //        imageHandle0 = NULL;
 
-        int nSumImage = 0;
+
+
+        // WhiteCal
+
         int error = 0;
 
-        for (int n = 0; n < 2; n++)
-        {
+        for (int n = 0; n < nAvgCount; n++){
             error = IoImageOpen((brightCalPath + "/WhiteRaw" + QString::number(n) + ".tiff").toStdString().c_str(), &imageHandle0);
-            if (error == 0)
-            {
+            if (error == 0){
                 Temp = (unsigned short*)IoImageGetData(imageHandle0);
 
-                for (int i = 0; i < m_iHeight; i++)
-                {
-                    for (int j = 0; j < m_iWidth; j++)
-                    {
-                        Temp1[i * m_iWidth + j] += (Temp[i * m_iWidth + j]);
-
+                for (int i = 0; i < m_iHeight; i++){
+                    for (int j = 0; j < m_iWidth; j++){
+                        if(n < 2){
+                            Temp1[i * m_iWidth + j] += (Temp[i * m_iWidth + j]);
+                        }else if(n>=2 && n < 4){
+                            Temp2[i * m_iWidth + j] += (Temp[i * m_iWidth + j]);
+                        }else if(n>=4 && n < 6){
+                            Temp3[i * m_iWidth + j] += (Temp[i * m_iWidth + j]);
+                        }else if(n>=6 && n < 8){
+                            Temp4[i * m_iWidth + j] += (Temp[i * m_iWidth + j]);
+                        }else if(n>=8 && n < 10){
+                            Temp5[i * m_iWidth + j] += (Temp[i * m_iWidth + j]);
+                        }else if(n>=10 && n < 12){
+                            Temp6[i * m_iWidth + j] += (Temp[i * m_iWidth + j]);
+                        }else if(n>= 12 && n < 14){
+                            Temp7[i * m_iWidth + j] += (Temp[i * m_iWidth + j]);
+                        }else if(n>= 14 && n < 16){
+                            Temp8[i * m_iWidth + j] += (Temp[i * m_iWidth + j]);
+                        }else{
+                            qDebug() << "Out of index";
+                        }
                     }
                 }
             }
-
         }
         IoFreeImage(imageHandle0);
         imageHandle0 = NULL;
-        for (int n = 2; n < 4; n++)
-        {
-            error = IoImageOpen((brightCalPath + "/WhiteRaw" + QString::number(n) + ".tiff").toStdString().c_str(), &imageHandle0);
-            if (error == 0)
-            {
-                Temp = (unsigned short*)IoImageGetData(imageHandle0);
+        /*
 
-                for (int i = 0; i < m_iHeight; i++)
-                {
-                    for (int j = 0; j < m_iWidth; j++)
-                    {
+        for (int n = 2; n < 4; n++){
+            error = IoImageOpen((brightCalPath + "/WhiteRaw" + QString::number(n) + ".tiff").toStdString().c_str(), &imageHandle0);
+            if (error == 0){
+                Temp = (unsigned short*)IoImageGetData(imageHandle0);
+                for (int i = 0; i < m_iHeight; i++){
+                    for (int j = 0; j < m_iWidth; j++){
                         Temp2[i * m_iWidth + j] += (Temp[i * m_iWidth + j]);
-
                     }
                 }
             }
         }
         IoFreeImage(imageHandle0);
         imageHandle0 = NULL;
-        for (int n = 4; n < 6; n++)
-        {
+        for (int n = 4; n < 6; n++){
             error = IoImageOpen((brightCalPath + "/WhiteRaw" + QString::number(n) + ".tiff").toStdString().c_str(), &imageHandle0);
-            if (error == 0)
-            {
+            if (error == 0){
                 Temp = (unsigned short*)IoImageGetData(imageHandle0);
 
-                for (int i = 0; i < m_iHeight; i++)
-                {
-                    for (int j = 0; j < m_iWidth; j++)
-                    {
+                for (int i = 0; i < m_iHeight; i++){
+                    for (int j = 0; j < m_iWidth; j++){
                         Temp3[i * m_iWidth + j] += (Temp[i * m_iWidth + j]);
-
                     }
                 }
             }
         }
         IoFreeImage(imageHandle0);
         imageHandle0 = NULL;
-        for (int n = 6; n < 8; n++)
-        {
+        for (int n = 6; n < 8; n++){
             error = IoImageOpen((brightCalPath + "/WhiteRaw" + QString::number(n) + ".tiff").toStdString().c_str(), &imageHandle0);
-            if (error == 0)
-            {
+            if (error == 0){
                 Temp = (unsigned short*)IoImageGetData(imageHandle0);
 
-                for (int i = 0; i < m_iHeight; i++)
-                {
-                    for (int j = 0; j < m_iWidth; j++)
-                    {
+                for (int i = 0; i < m_iHeight; i++){
+                    for (int j = 0; j < m_iWidth; j++){
                         Temp4[i * m_iWidth + j] += (Temp[i * m_iWidth + j]);
-
                     }
                 }
             }
         }
         IoFreeImage(imageHandle0);
         imageHandle0 = NULL;
-        for (int n = 8; n < 10; n++)
-        {
+        for (int n = 8; n < 10; n++){
             error = IoImageOpen((brightCalPath + "/WhiteRaw" + QString::number(n) + ".tiff").toStdString().c_str(), &imageHandle0);
-            if (error == 0)
-            {
+            if (error == 0){
                 Temp = (unsigned short*)IoImageGetData(imageHandle0);
 
-                for (int i = 0; i < m_iHeight; i++)
-                {
-                    for (int j = 0; j < m_iWidth; j++)
-                    {
+                for (int i = 0; i < m_iHeight; i++){
+                    for (int j = 0; j < m_iWidth; j++){
                         Temp5[i * m_iWidth + j] += (Temp[i * m_iWidth + j]);
-
                     }
                 }
             }
         }
         IoFreeImage(imageHandle0);
         imageHandle0 = NULL;
-        for (int n = 10; n < 12; n++)
-        {
+        for (int n = 10; n < 12; n++){
             error = IoImageOpen((brightCalPath + "/WhiteRaw" + QString::number(n) + ".tiff").toStdString().c_str(), &imageHandle0);
-            if (error == 0)
-            {
+            if (error == 0){
                 Temp = (unsigned short*)IoImageGetData(imageHandle0);
 
-                for (int i = 0; i < m_iHeight; i++)
-                {
+                for (int i = 0; i < m_iHeight; i++){
                     for (int j = 0; j < m_iWidth; j++)
                     {
                         Temp6[i * m_iWidth + j] += (Temp[i * m_iWidth + j]);
@@ -459,35 +471,25 @@ MainWindow::MainWindow(QWidget *parent)
                 }
             }
         }
-        for (int i = 0; i < m_iHeight; i++)
-        {
-            for (int j = 0; j < m_iWidth; j++)
-            {
+*/
+        for (int i = 0; i < m_iHeight; i++){
+            for (int j = 0; j < m_iWidth; j++){
                 AveImg[i * m_iWidth + j] = ((Temp1[i * m_iWidth + j]) + (Temp2[i * m_iWidth + j]) + (Temp3[i * m_iWidth + j])+(Temp4[i * m_iWidth + j])+ (Temp5[i * m_iWidth + j])+ (Temp6[i * m_iWidth + j])+ (Temp7[i * m_iWidth + j])+ (Temp8[i * m_iWidth + j])) / nAvgCount;
-
             }
         }
         IoWriteTiff((brightCalPath + "/WcalAvg.tiff").toStdString().c_str(), (unsigned char*)AveImg, m_iWidth, m_iHeight, 16, 1);
         //        IoWriteTiff("C:/Users/User/Desktop/Minu/Xiso/Test/Wcal/DcalAvg.tiff", (unsigned char*)AveImg, m_iWidth, m_iHeight, 16, 1);
 
-        for (int i = 0; i < m_iHeight; i++)
-        {
-            for (int j = 0; j < m_iWidth; j++)
-            {
-
-
+        for (int i = 0; i < m_iHeight; i++){
+            for (int j = 0; j < m_iWidth; j++){
                 // Low 8bit
                 cal_Data2[i * m_iWidth + j] = AveImg[i * m_iWidth + j] / 1;   //BIT SHIFT 2^8=256 ->  (Bit7 ~ Bit0)
                 // High 8bit
                 cal_Data3[i * m_iWidth + j] = AveImg[i * m_iWidth + j] / 256;   //BIT SHIFT 2^8=256 ->  (Bit15 ~ Bit8)
-
-
             }
         }
         IoWriteTiff((brightCalPath + "/B1.tiff").toStdString().c_str(), cal_Data2, m_iWidth, m_iHeight, 8, 1);
         IoWriteTiff((brightCalPath + "/B2.tiff").toStdString().c_str(), cal_Data3, m_iWidth, m_iHeight, 8, 1);
-
-
 
         IoFreeImage(imageHandle0);
         imageHandle0 = NULL;
@@ -510,7 +512,6 @@ MainWindow::MainWindow(QWidget *parent)
         int cnt = 0;
         for (int h = 0; h < m_iHeight; h++) {
             for (int w = 0; w < m_iWidth; w++) {
-
                 unsigned int d1_p = (unsigned int) cal_Data0[cnt];
                 unsigned int d2_p = (unsigned int) cal_Data1[cnt];
                 unsigned int b1_p = (unsigned int) cal_Data2[cnt];
@@ -525,16 +526,12 @@ MainWindow::MainWindow(QWidget *parent)
             //after each line dummy pixels must be added
             //width/12 = ?    2800 / 12 = 233.333 -> 234? ??, 234 * 12= 2808 , 8 pixel ?? ??
             //width/12 = ?    2804 / 12 = 233.333 -> 234? ??, 234 * 12= 2808 , 8 pixel ?? ??
-            if (m_iWidth % 12 != 0)
-            {
+            if (m_iWidth % 12 != 0){
                 for (int dummy = 0; dummy < 8; dummy++)
                     lutfile << 0 << "\n";
-            }
-            else
-            {
+            }else{
                 for (int dummy = 0; dummy < 4; dummy++)
                     lutfile << 0 << "\n";
-
             }
         }
 
@@ -543,7 +540,27 @@ MainWindow::MainWindow(QWidget *parent)
         QMessageBox::information(this, "Xiso", "Lookup table is done.");
 
     });
-
+    // channel changes.
+    connect(ui->comboBox_channel, &QComboBox::currentTextChanged, this ,[this](QString string){
+        qDebug() << string << "mode is enabled.";
+        if(string == "Grabber"){
+            disconnect(detectorConnect);
+            grabberConnect = connect(this->grabber, &CGrabber::sendImage, this, [this](QImage image){
+                this->widget->setImage(image);
+                ui->statusbar->showMessage("Elapsed time : " + QString::number(timer->restart()));
+            });
+        }else{ // detector mode
+            disconnect(grabberConnect);
+            detectorConnect = connect(this->detector, &Detector::sendImage, this, [this](QImage image){
+                this->widget->setImage(image);
+                ui->statusbar->showMessage("Elapsed time : " + QString::number(timer->restart()));
+            });
+        }
+    });
+    // ROI set-up
+    connect(ui->pushButton_roiApply, &QPushButton::clicked, this, [this](){
+        this->setROI();
+    });
 }
 
 MainWindow::~MainWindow()
@@ -557,35 +574,43 @@ void MainWindow::setGrabber(CGrabber *c)
 {
     grabber = c;
     ui->formLayout_grabber->addRow(grabber->getDialog());
-    connect(grabber, &CGrabber::sendImage, this, [this](QImage image){
+    // Default Grabber
+    grabberConnect = connect(this->grabber, &CGrabber::sendImage, this, [this](QImage image){
         this->widget->setImage(image);
         ui->statusbar->showMessage("Elapsed time : " + QString::number(timer->restart()));
     });
-    connect(ui->pushButton_ResetGrabber, &QPushButton::clicked, this, [this](){
-        this->grabber->stopGrabbing();
-    });
+
 }
 /// DETECTOR PART BEGINS ///
 void MainWindow::setDetector(Detector *d)
 {
     detector = d;
-//    connect(d, &Detector::sendBuffer, this, [this](unsigned short* buf){
-//        qDebug() << "Grabbed data. start converting";
-//        QImage *img = new QImage((unsigned char*)buf, 2400, 600, QImage::Format_Grayscale16);
-
-//        img->save("C:/5608/qt.tiff");
-
-//        this->widget->setImage(*img);
-//    });
-
-//    detector->getDialog()->show();
     ui->formLayout_detector->addRow(detector->getDialog());
+    connect(d, &Detector::sendBuffer, this->grabber, &CGrabber::convertToGrabberImage);
+
 }
 
 void MainWindow::setMessage(QString message)
 {
-    //    console->append(message);
     ui->textEdit->append(message);
+}
+
+void MainWindow::setROI()
+{
+    int x = ui->spinBox_roiX->value();
+    int y = ui->spinBox_roiY->value();
+    int width = ui->spinBox_width->value();
+    int height = ui->spinBox_height->value();
+
+    this->grabber->setXOffset(x);
+    this->grabber->setYOffset(y);
+    this->grabber->setImageWidth(width);
+    this->grabber->setImageHeight(height);
+
+    this->detector->setX(x);
+    this->detector->setY(y);
+    this->detector->setWidth(width);
+    this->detector->setHeight(height);
 }
 
 

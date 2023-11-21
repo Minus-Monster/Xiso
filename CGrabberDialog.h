@@ -16,11 +16,14 @@ public:
     explicit CGrabberDialog(QWidget *parent = nullptr);
     ~CGrabberDialog();
     void setGrabber(CGrabber *_grabber);
+
+public slots:
     void updateInformation();
 
 private:
     Ui::CGrabberDialog *ui;
     CGrabber *grabber =nullptr;
+    QString currentTestFilePath = "";
 };
 
 #endif // CGRABBERDIALOG_H

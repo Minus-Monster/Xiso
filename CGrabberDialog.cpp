@@ -34,8 +34,8 @@ CGrabberDialog::CGrabberDialog(QWidget *parent) :
             return;
         }
         if(!grabber->loadConfiguration(config)){
-//            QMessageBox::warning(this, this->windowTitle(), "A config file is not loaded. ");
-//            return;
+            //            QMessageBox::warning(this, this->windowTitle(), "A config file is not loaded. ");
+            //            return;
         }
         grabber->initialize();
         ui->groupBox_roi->setEnabled(true);
@@ -122,6 +122,50 @@ CGrabberDialog::CGrabberDialog(QWidget *parent) :
             }
             ui->lineEdit_LUTFilePath->blockSignals(false);
         });
+        connect(ui->checkBox_deadPixelInterpolation, &QCheckBox::stateChanged, this, [this](){
+            ui->checkBox_deadPixelInterpolation->blockSignals(true);
+            if(!this->grabber->setDeadPixelInterpolation(ui->checkBox_deadPixelInterpolation->isChecked())){
+                ui->checkBox_deadPixelInterpolation->setChecked(this->grabber->getDeadPixelInterpolation());
+                QMessageBox::warning(this, this->windowTitle(), "Couldn't apply new value to Deadpixel interpolation parameter.");
+            }else qDebug() << "Deadpixel interpolation value is applied correctly.";
+            ui->checkBox_deadPixelInterpolation->blockSignals(false);
+        });
+        connect(ui->checkBox_removeDarkH, &QCheckBox::stateChanged, this, [this](){
+            ui->checkBox_removeDarkH->blockSignals(true);
+            if(!this->grabber->setRemovingDarkH(ui->checkBox_removeDarkH->isChecked())){
+                ui->checkBox_removeDarkH->setChecked(this->grabber->getRemovingDarkH());
+                QMessageBox::warning(this, this->windowTitle(), "Couldn't apply new value to Removing dark H parameter.");
+            }else qDebug() << "Removing dark H value is applied correctly.";
+            ui->checkBox_removeDarkH->blockSignals(false);
+        });
+        connect(ui->checkBox_removeDarkV, &QCheckBox::stateChanged, this, [this](){
+            ui->checkBox_removeDarkV->blockSignals(true);
+            if(!this->grabber->setRemovingDarkV(ui->checkBox_removeDarkV->isChecked())){
+                ui->checkBox_removeDarkV->setChecked(this->grabber->getRemovingDarkV());
+                QMessageBox::warning(this, this->windowTitle(), "Couldn't apply new value to Removing dark V parameter.");
+            }else qDebug() << "Removing dark V value is applied correctly.";
+            ui->checkBox_removeDarkV->blockSignals(false);
+        });
+        connect(ui->pushButton_continuous, &QPushButton::clicked, this, [this](){
+            this->grabber->continuousGrabbing();
+        });
+        connect(ui->pushButton_stop, &QPushButton::clicked, this, [this](){
+            this->grabber->stopGrabbing();
+        });
+        connect(ui->pushButton_testPath, &QPushButton::clicked, this, [this](){
+            auto path = QFileDialog::getOpenFileName(this, this->windowTitle(), QDir::currentPath(), "*.jpg *.png *.tif *.tiff");
+            if(path.isEmpty()){
+                ui->pushButton_testPath->setChecked(false);
+                return;
+            }else{
+                currentTestFilePath = path;
+                qDebug() << currentTestFilePath;
+            }
+        });
+        connect(ui->pushButton_testShot, &QPushButton::clicked, this, [this](){
+            QImage img(currentTestFilePath);
+            this->grabber->convertToGrabberImage((unsigned short*)img.bits());
+        });
         QMessageBox::information(this, this->windowTitle(), "Initialization is done.");
     });
 
@@ -149,4 +193,8 @@ void CGrabberDialog::updateInformation()
     ui->checkBox_loadInitFile->setChecked(grabber->getInitFile());
     ui->lineEdit_LUTFilePath->setText(grabber->getLUTFileName());
     ui->spinBox_SCOverSaturation->setValue(grabber->getOverSaturation());
+
+    ui->checkBox_deadPixelInterpolation->setChecked(grabber->getDeadPixelInterpolation());
+    ui->checkBox_removeDarkV->setChecked(grabber->getRemovingDarkV());
+    ui->checkBox_removeDarkH->setChecked(grabber->getRemovingDarkH());
 }

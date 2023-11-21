@@ -27,6 +27,7 @@ public:
     void setGrabber(CGrabber *c);
     void setDetector(Detector *d);
     void setMessage(QString message);
+    void setROI();
 
 signals:
     void grabbingStart(int numFrame=0);
@@ -49,6 +50,9 @@ private:
     uint8_t* cal_Data1 = NULL;
     uint8_t* cal_Data2 = NULL;
     uint8_t* cal_Data3 = NULL;
+
+    QMetaObject::Connection grabberConnect;
+    QMetaObject::Connection detectorConnect;
 
 };
 #endif // MAINWINDOW_H

@@ -6,8 +6,8 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>301</width>
-    <height>454</height>
+    <width>233</width>
+    <height>584</height>
    </rect>
   </property>
   <property name="windowTitle">
@@ -159,7 +159,39 @@
       <string>User Configuration</string>
      </property>
      <layout class="QGridLayout" name="gridLayout_3">
-      <item row="0" column="0">
+      <item row="1" column="0">
+       <widget class="QCheckBox" name="checkBox_deadPixelInterpolation">
+        <property name="text">
+         <string>Deadpixel Interpolation</string>
+        </property>
+       </widget>
+      </item>
+      <item row="7" column="0">
+       <widget class="Line" name="line_2">
+        <property name="orientation">
+         <enum>Qt::Horizontal</enum>
+        </property>
+       </widget>
+      </item>
+      <item row="10" column="0">
+       <layout class="QHBoxLayout" name="horizontalLayout_7">
+        <item>
+         <widget class="QPushButton" name="pushButton_continuous">
+          <property name="text">
+           <string>Continuous</string>
+          </property>
+         </widget>
+        </item>
+        <item>
+         <widget class="QPushButton" name="pushButton_stop">
+          <property name="text">
+           <string>Stop</string>
+          </property>
+         </widget>
+        </item>
+       </layout>
+      </item>
+      <item row="5" column="0">
        <widget class="QCheckBox" name="checkBox_SCEnable">
         <property name="layoutDirection">
          <enum>Qt::LeftToRight</enum>
@@ -172,7 +204,21 @@
         </property>
        </widget>
       </item>
-      <item row="1" column="0">
+      <item row="3" column="0">
+       <widget class="QCheckBox" name="checkBox_removeDarkH">
+        <property name="text">
+         <string>Removing Darkline H</string>
+        </property>
+       </widget>
+      </item>
+      <item row="2" column="0">
+       <widget class="QCheckBox" name="checkBox_removeDarkV">
+        <property name="text">
+         <string>Removing Darkline V</string>
+        </property>
+       </widget>
+      </item>
+      <item row="6" column="0">
        <layout class="QHBoxLayout" name="horizontalLayout">
         <item>
          <widget class="QLabel" name="label_5">
@@ -190,7 +236,27 @@
         </item>
        </layout>
       </item>
-      <item row="2" column="0">
+      <item row="4" column="0">
+       <widget class="Line" name="line">
+        <property name="orientation">
+         <enum>Qt::Horizontal</enum>
+        </property>
+       </widget>
+      </item>
+      <item row="8" column="0">
+       <widget class="QCheckBox" name="checkBox_loadInitFile">
+        <property name="layoutDirection">
+         <enum>Qt::LeftToRight</enum>
+        </property>
+        <property name="text">
+         <string>Load an init file</string>
+        </property>
+        <property name="tristate">
+         <bool>false</bool>
+        </property>
+       </widget>
+      </item>
+      <item row="9" column="0">
        <layout class="QHBoxLayout" name="horizontalLayout_2">
         <item>
          <widget class="QLabel" name="label_6">
@@ -204,18 +270,26 @@
         </item>
        </layout>
       </item>
-      <item row="3" column="0">
-       <widget class="QCheckBox" name="checkBox_loadInitFile">
-        <property name="layoutDirection">
-         <enum>Qt::LeftToRight</enum>
-        </property>
-        <property name="text">
-         <string>Load an init file</string>
-        </property>
-        <property name="tristate">
-         <bool>false</bool>
-        </property>
-       </widget>
+      <item row="11" column="0">
+       <layout class="QHBoxLayout" name="horizontalLayout_8">
+        <item>
+         <widget class="QPushButton" name="pushButton_testPath">
+          <property name="text">
+           <string>Test Image Path</string>
+          </property>
+          <property name="checkable">
+           <bool>true</bool>
+          </property>
+         </widget>
+        </item>
+        <item>
+         <widget class="QPushButton" name="pushButton_testShot">
+          <property name="text">
+           <string>Test shot</string>
+          </property>
+         </widget>
+        </item>
+       </layout>
       </item>
      </layout>
     </widget>

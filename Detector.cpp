@@ -1,5 +1,6 @@
 #include "Detector.h"
 #include "DetectorDialog.h"
+#include <QImage>
 Detector *instance = nullptr;
 
 int frameCount = 0;
@@ -26,13 +27,17 @@ void callBackLive(SpectrumLogic::ushort *pImg, int *pWidth, int *pHeight, Spectr
     }
     qDebug() << "For checking" << *pFrameCount << frameCount;
     ++*pFrameCount;
+
+    QImage qImage((uchar*)instance->currentBuffer, *pWidth, *pHeight, QImage::Format_Grayscale16);
     emit instance->sendBuffer(instance->currentBuffer);
+    emit instance->sendImage(qImage);
 
 }
 
 Detector::Detector() {
     dialog = new DetectorDialog;
     dialog->setDetector(this);
+    connect(this, &Detector::updateInformation, dialog, &DetectorDialog::updateInformation);
 }
 
 bool Detector::initialize(){
@@ -105,6 +110,7 @@ bool Detector::setROI(int _w, int _h, int _x, int _y)
 void Detector::setWidth(int _w)
 {
     setROI(_w, getHeight(), getX(), getY());
+    updateInformation();
 }
 
 int Detector::getWidth()
@@ -117,6 +123,7 @@ int Detector::getWidth()
 void Detector::setHeight(int _h)
 {
     setROI(getWidth(), _h, getX(), getY());
+    updateInformation();
 }
 
 int Detector::getHeight()
@@ -129,6 +136,7 @@ int Detector::getHeight()
 void Detector::setX(int _x)
 {
     setROI(getWidth(), getHeight(), _x, getY());
+    updateInformation();
 }
 
 int Detector::getX()
@@ -141,6 +149,7 @@ int Detector::getX()
 void Detector::setY(int _y)
 {
     setROI(getWidth(), getHeight(), getX(), _y);
+    updateInformation();
 }
 
 int Detector::getY()
@@ -160,7 +169,7 @@ bool Detector::setExposureTime(int ms){
     if(error != SpectrumLogic::SLError::SL_ERROR_SUCCESS) return false;
 
     exposureTime = ms;
-
+    updateInformation();
     return true;
 }
 
@@ -177,8 +186,10 @@ int Detector::getExposureTime(){
 
 bool Detector::setExposureMode(SpectrumLogic::ExposureModes mode)
 {
+    if(!sl_device.IsConnected()) return false;
     auto error = sl_device.SetExposureMode(mode);
     qDebug() << "Set exposure mode :" << SpectrumLogic::SLErrorToString(error).c_str();
+    updateInformation();
     if(error != SpectrumLogic::SLError::SL_ERROR_SUCCESS) return false;
     else return true;
 }
@@ -193,6 +204,7 @@ SpectrumLogic::ExposureModes Detector::getExposureMode()
 bool Detector::setBinningMode(SpectrumLogic::BinningModes mode){
     auto error = sl_device.SetBinningMode(mode);
     qDebug()<< "Set binning mode : " <<SpectrumLogic::SLErrorToString(error).c_str();
+    updateInformation();
     if(error != SpectrumLogic::SLError::SL_ERROR_SUCCESS){
         return false;
     }else return true;
@@ -206,6 +218,7 @@ bool Detector::setFullWell(SpectrumLogic::FullWellModes mode)
 {
     auto error = sl_device.SetFullWell(mode);
     qDebug() << "Set full well : " << SpectrumLogic::SLErrorToString(sl_device.SetFullWell(mode)).c_str();
+    updateInformation();
     if(error != SpectrumLogic::SLError::SL_ERROR_SUCCESS){
         return false;
     }else return true;
@@ -213,5 +226,6 @@ bool Detector::setFullWell(SpectrumLogic::FullWellModes mode)
 
 SpectrumLogic::FullWellModes Detector::getFullWellMode()
 {
+
     return SpectrumLogic::FullWellModes::Low;
 }

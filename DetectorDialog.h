@@ -19,6 +19,9 @@ public:
         detector = d;
     }
 
+public slots:
+    void updateInformation();
+
 private:
     Ui::DetectorDialog *ui;
     Detector *detector;
