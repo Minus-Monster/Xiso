@@ -1,9 +1,12 @@
 #include "CGrabber.h"
-
+#include <QTime>
 CGrabber* instance = nullptr;
 int callbackFromGrabber(frameindex_t picNr, void *){
     uchar *buffer = (uchar*)Fg_getImagePtrEx(instance->getFg(), picNr, 0, instance->getDMAOut());
     QImage outputImage = QImage(buffer, instance->getImageWidth(), instance->getImageHeight(), QImage::Format_Grayscale16);
+
+    qDebug() << "Try to save current image";
+    qDebug() << "Out:"<<outputImage.save("C:/Users/User/Desktop/Minu/" + QTime::currentTime().toString() + ".tif");
     emit instance->sendImage(outputImage);
     //    qDebug() << instance->timer->elapsed();
     //    qDebug() << "Callback called a t" << picNr << "My intended" << instance->getSequentialNumFrame();

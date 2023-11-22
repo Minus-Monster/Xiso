@@ -54,7 +54,7 @@
       <item>
        <widget class="QComboBox" name="comboBox_channel">
         <property name="currentText">
-         <string>Detector</string>
+         <string>Grabber</string>
         </property>
         <item>
          <property name="text">

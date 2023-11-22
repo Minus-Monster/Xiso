@@ -1,18 +1,32 @@
 #include "Detector.h"
 #include "DetectorDialog.h"
 #include <QImage>
-Detector *instance = nullptr;
 
-int frameCount = 0;
+Detector *instance = nullptr;
+int setFrameCount =0;
+int loopCnt = 0;
 void callBackLive(SpectrumLogic::ushort *pImg, int *pWidth, int *pHeight, SpectrumLogic::SLError *err, void *userArgs) {
     int* pFrameCount = (int*)userArgs;
+    qDebug() << "frame count : " << *pFrameCount  << "Loopcnt" << loopCnt;
+
+    if(loopCnt ==0 ){
+
+    }else if(*pFrameCount == loopCnt){
+        instance->stopGrabbing();
+        return;
+    }
+//    if(*pFrameCount >= loopCnt && loopCnt != 9999){
+//        instance->stopGrabbing();
+//        return;
+//    }else if(loopCnt == 9999){ // Continuous
+//    }
     if (*err != SpectrumLogic::SLError::SL_ERROR_SUCCESS)
     {
         qDebug() << "[ERROR]: Failed to get frame" ;
         return;
     }
 
-    //    free(instance->currentBuffer);
+//    free(instance->currentBuffer);
     instance->currentBuffer = (unsigned short*)malloc((size_t)(*pWidth * *pHeight * 2));
     memcpy(instance->currentBuffer, pImg, sizeof(SpectrumLogic::ushort) * *pWidth * *pHeight);
 
@@ -25,12 +39,10 @@ void callBackLive(SpectrumLogic::ushort *pImg, int *pWidth, int *pHeight, Spectr
             qDebug() << "[ERROR]: Failed to save frame #" << *pFrameCount + 1;
         }
     }
-    qDebug() << "For checking" << *pFrameCount << frameCount;
-    ++*pFrameCount;
-
     QImage qImage((uchar*)instance->currentBuffer, *pWidth, *pHeight, QImage::Format_Grayscale16);
     emit instance->sendBuffer(instance->currentBuffer);
     emit instance->sendImage(qImage);
+    ++*pFrameCount;
 
 }
 
@@ -62,23 +74,27 @@ bool Detector::initialize(){
 
 
 void Detector::sequentialGrabbing(int numFrame) {
+    qDebug() << "Sequential Grabbing started with frame " << numFrame;
     if(!sl_device.IsConnected()){
         qDebug() << "SL Device is not connected. Nothing will be changed.";
         return;
     }
-    qDebug() << setExposureMode(SpectrumLogic::ExposureModes::seq_mode);
-
+    setExposureMode(SpectrumLogic::ExposureModes::seq_mode);
     sl_device.SetNumberOfFrames(numFrame);
 
-    frameCount = 0;
-    sl_device.GoLive(callBackLive, &frameCount);
+    setFrameCount = 0;
+    loopCnt = numFrame;
+    qDebug() << "Loopcnt is " << loopCnt;
+    sl_device.GoLive(callBackLive, &setFrameCount);
     sl_device.SoftwareTrigger();
 }
 
 void Detector::continuousGrabbing()
 {
-    frameCount = 0;
-    sl_device.GoLive(callBackLive, &frameCount);
+    setFrameCount = 0;
+    loopCnt = 0;
+    setExposureMode(SpectrumLogic::ExposureModes::fps30_mode);
+    sl_device.GoLive(callBackLive, &setFrameCount);
 }
 
 void Detector::stopGrabbing() {
@@ -164,8 +180,9 @@ bool Detector::setExposureTime(int ms){
         qDebug() << "SL Device is not connected. Nothing will be changed.";
         return false;
     }
+
     auto error = sl_device.SetExposureTime(exposureTime);
-    qDebug() << "Set exposure time : " << SpectrumLogic::SLErrorToString(error).c_str();
+    qDebug() << "Set exposure time : " << SpectrumLogic::SLErrorToString(error).c_str() << "Value" << ms;
     if(error != SpectrumLogic::SLError::SL_ERROR_SUCCESS) return false;
 
     exposureTime = ms;

@@ -60,7 +60,9 @@ DetectorDialog::DetectorDialog(QWidget *parent) :
     });
     // Exp Time
     connect(ui->spinBox_exposureTime, &QSpinBox::editingFinished, this, [=](){
+        ui->spinBox_exposureTime->blockSignals(true);
         this->detector->setExposureTime(this->ui->spinBox_exposureTime->value());
+        ui->spinBox_exposureTime->blockSignals(false);
     });
     // Exp Mode
     connect(ui->comboBox_exposureMode, &QComboBox::currentTextChanged, this, [=](QString value){
