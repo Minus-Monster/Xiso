@@ -63,7 +63,7 @@ MainWindow::MainWindow(QWidget *parent)
         // need to capture X frames and save that frames in the specific folder.
 
         grabber->setCalibMode(true);
-        detector->setSaveMode(false);
+//        detector->setSaveMode(false); // need to revise this code. threading error.
     });
     // bright calib
     connect(ui->pushButton_bright, &QPushButton::clicked, this, [this](){
@@ -78,10 +78,11 @@ MainWindow::MainWindow(QWidget *parent)
         detector->sequentialGrabbing(ui->spinBox_calibCount->value());
 
         grabber->setCalibMode(true);
-        detector->setSaveMode(false);
+//        detector->setSaveMode(false);
     });
     // calib out
     connect(ui->pushButton_out, &QPushButton::clicked, this, [this](){
+        detector->setSaveMode(false);
         // Test Function now
         /*
         darkCalPath = "C:/Users/User/Desktop/Minu/Xiso/Test/Dark";
@@ -145,8 +146,8 @@ MainWindow::MainWindow(QWidget *parent)
         int nByte = 2;
         int nAvgCount = ui->spinBox_calibCount->value();
 
-        //        darkCalPath = "C:/Users/User/Desktop/Minu/Xiso/Test/Dark";
-        //        brightCalPath = "C:/Users/User/Desktop/Minu/Xiso/Test/Bright";
+                darkCalPath = "C:/Users/User/Desktop/Minu/Xiso/Cal";
+                brightCalPath = "C:/Users/User/Desktop/Minu/Xiso/Cal";
         cal_Data0 = new unsigned char[(long long)m_iWidth*m_iHeight];
         cal_Data1 = new unsigned char[(long long)m_iWidth*m_iHeight];
         cal_Data2 = new unsigned char[(long long)m_iWidth*m_iHeight];
@@ -174,8 +175,17 @@ MainWindow::MainWindow(QWidget *parent)
 
         qDebug() << nAvgCount;
         for (int n = 0; n < nAvgCount; n++){
-            auto error = IoImageOpen((darkCalPath + "/DarkRaw" + QString::number(n) + ".tiff").toStdString().c_str(), &imageHandle0);
+            qDebug() << "Opening dark cal path" <<(darkCalPath + "/DarkRaw" + QString::number(n) + ".tiff");
+            // convert the path
+            QString originalPath = (darkCalPath + "/DarkRaw" + QString::number(n) + ".tiff");
+            auto editedPath = QDir::toNativeSeparators((darkCalPath + "/DarkRaw" + QString::number(n) + ".tiff"));
+            qDebug() << "Edited" << editedPath;
+            auto error = IoImageOpen(originalPath.toStdString().c_str(), &imageHandle0);
+
+//            auto error = IoImageOpen("C:/Users/User/Desktop/Minu/Xiso/Cal/DarkRaw") + std::to_string(n)
+//                                      + std::string(".tiff")).c_str(), &imageHandle0);
             if(error == 0){
+                qDebug() << "Error";
                 Temp = (unsigned short*)IoImageGetData(imageHandle0);
 
                 for (int i = 0; i < m_iHeight; i++){
@@ -201,6 +211,8 @@ MainWindow::MainWindow(QWidget *parent)
                         }
                     }
                 }
+            }else{
+                qDebug() << Fg_getErrorDescription(nullptr, error);
             }
         }
         IoFreeImage(imageHandle0);
@@ -577,6 +589,7 @@ void MainWindow::setGrabber(CGrabber *c)
     // Default Grabber
     grabberConnect = connect(this->grabber, &CGrabber::sendImage, this, [this](QImage image){
         this->widget->setImage(image);
+//        qDebug() << "try to save images" << image.save("C:/Users/User/Desktop/tmpMinu/test.tiff");
         ui->statusbar->showMessage("Elapsed time : " + QString::number(timer->restart()));
     });
 

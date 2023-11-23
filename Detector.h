@@ -44,8 +44,9 @@ public:
     void setSavingPath(QString path){ savePath = path; }
     QString getSavingPath(){ return savePath; }
     bool isSaveMode(){ return saveMode; }
-    unsigned short* currentBuffer;
+    unsigned short* currentBuffer=nullptr;
     QDialog* getDialog(){ return dynamic_cast<QDialog*>(dialog);}
+    bool isRunning = false;
 
 signals:
     void sendBuffer(unsigned short* buffer);

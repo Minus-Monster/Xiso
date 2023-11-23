@@ -8,40 +8,38 @@ int loopCnt = 0;
 void callBackLive(SpectrumLogic::ushort *pImg, int *pWidth, int *pHeight, SpectrumLogic::SLError *err, void *userArgs) {
     int* pFrameCount = (int*)userArgs;
     qDebug() << "frame count : " << *pFrameCount  << "Loopcnt" << loopCnt;
+    if(!instance->isRunning) return;
 
-    if(loopCnt ==0 ){
-
-    }else if(*pFrameCount == loopCnt){
-        instance->stopGrabbing();
-        return;
-    }
-//    if(*pFrameCount >= loopCnt && loopCnt != 9999){
-//        instance->stopGrabbing();
-//        return;
-//    }else if(loopCnt == 9999){ // Continuous
-//    }
     if (*err != SpectrumLogic::SLError::SL_ERROR_SUCCESS)
     {
         qDebug() << "[ERROR]: Failed to get frame" ;
+        instance->stopGrabbing();
         return;
     }
 
-//    free(instance->currentBuffer);
-    instance->currentBuffer = (unsigned short*)malloc((size_t)(*pWidth * *pHeight * 2));
+
     memcpy(instance->currentBuffer, pImg, sizeof(SpectrumLogic::ushort) * *pWidth * *pHeight);
 
     SpectrumLogic::SLImage image;
     image.Build(*pWidth, *pHeight, 1);
     if(instance->isSaveMode()){
-        qDebug() << "entranced to saving mode";
+        qDebug() << "entranced to saving mode frame cnt " << *pFrameCount;
         memcpy(image.GetDataPointer(0), pImg, sizeof(SpectrumLogic::ushort) * *pWidth * *pHeight);
-        if (!image.WriteTiffImage(instance->getSavingPath().toStdString() + std::to_string(*pFrameCount) + ".tiff", image, 16)){
-            qDebug() << "[ERROR]: Failed to save frame #" << *pFrameCount + 1;
-        }
+//        if (!image.WriteTiffImage(instance->getSavingPath().toStdString() + std::to_string(*pFrameCount) + ".tiff", image, 16)){
+//            qDebug() << "[ERROR]: Failed to save frame #" << *pFrameCount + 1;
+//        }
+
     }
     QImage qImage((uchar*)instance->currentBuffer, *pWidth, *pHeight, QImage::Format_Grayscale16);
+    qDebug() << "Saving " << qImage.save("C:/Users/User/Minu/Xiso/Cal/TTT" + QString::number(*pFrameCount) + ".tiff");
     emit instance->sendBuffer(instance->currentBuffer);
     emit instance->sendImage(qImage);
+
+    if(loopCnt ==0 ){}
+    else if(*pFrameCount == loopCnt){
+        instance->stopGrabbing();
+        return;
+    }
     ++*pFrameCount;
 
 }
@@ -49,6 +47,7 @@ void callBackLive(SpectrumLogic::ushort *pImg, int *pWidth, int *pHeight, Spectr
 Detector::Detector() {
     dialog = new DetectorDialog;
     dialog->setDetector(this);
+    if(currentBuffer != nullptr) free(currentBuffer);
     connect(this, &Detector::updateInformation, dialog, &DetectorDialog::updateInformation);
 }
 
@@ -85,14 +84,18 @@ void Detector::sequentialGrabbing(int numFrame) {
     setFrameCount = 0;
     loopCnt = numFrame;
     qDebug() << "Loopcnt is " << loopCnt;
+    currentBuffer = (unsigned short*)malloc((size_t)(getWidth()*getHeight()*2));
     sl_device.GoLive(callBackLive, &setFrameCount);
     sl_device.SoftwareTrigger();
+    isRunning = true;
 }
 
 void Detector::continuousGrabbing()
 {
     setFrameCount = 0;
     loopCnt = 0;
+    isRunning =true;
+    currentBuffer = (unsigned short*)malloc((size_t)(getWidth()*getHeight()*2));
     setExposureMode(SpectrumLogic::ExposureModes::fps30_mode);
     sl_device.GoLive(callBackLive, &setFrameCount);
 }
@@ -103,6 +106,9 @@ void Detector::stopGrabbing() {
         return;
     }
     sl_device.GoUnLive();
+    isRunning = false;
+    if(currentBuffer != nullptr) free(currentBuffer);
+    currentBuffer = nullptr;
 }
 
 bool Detector::setROI(int _w, int _h, int _x, int _y)
@@ -126,7 +132,7 @@ bool Detector::setROI(int _w, int _h, int _x, int _y)
 void Detector::setWidth(int _w)
 {
     setROI(_w, getHeight(), getX(), getY());
-    updateInformation();
+//    updateInformation();
 }
 
 int Detector::getWidth()
@@ -139,7 +145,7 @@ int Detector::getWidth()
 void Detector::setHeight(int _h)
 {
     setROI(getWidth(), _h, getX(), getY());
-    updateInformation();
+//    updateInformation();
 }
 
 int Detector::getHeight()
@@ -152,7 +158,7 @@ int Detector::getHeight()
 void Detector::setX(int _x)
 {
     setROI(getWidth(), getHeight(), _x, getY());
-    updateInformation();
+//    updateInformation();
 }
 
 int Detector::getX()
@@ -165,7 +171,7 @@ int Detector::getX()
 void Detector::setY(int _y)
 {
     setROI(getWidth(), getHeight(), getX(), _y);
-    updateInformation();
+//    updateInformation();
 }
 
 int Detector::getY()
@@ -186,7 +192,7 @@ bool Detector::setExposureTime(int ms){
     if(error != SpectrumLogic::SLError::SL_ERROR_SUCCESS) return false;
 
     exposureTime = ms;
-    updateInformation();
+//    updateInformation();
     return true;
 }
 
@@ -206,7 +212,7 @@ bool Detector::setExposureMode(SpectrumLogic::ExposureModes mode)
     if(!sl_device.IsConnected()) return false;
     auto error = sl_device.SetExposureMode(mode);
     qDebug() << "Set exposure mode :" << SpectrumLogic::SLErrorToString(error).c_str();
-    updateInformation();
+//    updateInformation();
     if(error != SpectrumLogic::SLError::SL_ERROR_SUCCESS) return false;
     else return true;
 }
@@ -221,7 +227,7 @@ SpectrumLogic::ExposureModes Detector::getExposureMode()
 bool Detector::setBinningMode(SpectrumLogic::BinningModes mode){
     auto error = sl_device.SetBinningMode(mode);
     qDebug()<< "Set binning mode : " <<SpectrumLogic::SLErrorToString(error).c_str();
-    updateInformation();
+//    updateInformation();
     if(error != SpectrumLogic::SLError::SL_ERROR_SUCCESS){
         return false;
     }else return true;
@@ -235,7 +241,7 @@ bool Detector::setFullWell(SpectrumLogic::FullWellModes mode)
 {
     auto error = sl_device.SetFullWell(mode);
     qDebug() << "Set full well : " << SpectrumLogic::SLErrorToString(sl_device.SetFullWell(mode)).c_str();
-    updateInformation();
+//    updateInformation();
     if(error != SpectrumLogic::SLError::SL_ERROR_SUCCESS){
         return false;
     }else return true;

@@ -5,8 +5,6 @@ int callbackFromGrabber(frameindex_t picNr, void *){
     uchar *buffer = (uchar*)Fg_getImagePtrEx(instance->getFg(), picNr, 0, instance->getDMAOut());
     QImage outputImage = QImage(buffer, instance->getImageWidth(), instance->getImageHeight(), QImage::Format_Grayscale16);
 
-    qDebug() << "Try to save current image";
-    qDebug() << "Out:"<<outputImage.save("C:/Users/User/Desktop/Minu/" + QTime::currentTime().toString() + ".tif");
     emit instance->sendImage(outputImage);
     //    qDebug() << instance->timer->elapsed();
     //    qDebug() << "Callback called a t" << picNr << "My intended" << instance->getSequentialNumFrame();
@@ -87,11 +85,12 @@ void CGrabber::initialize()
     apcData->ctrl.flags = FG_APC_DEFAULTS | FG_APC_IGNORE_STOP | FG_APC_IGNORE_TIMEOUTS | FG_APC_HIGH_PRIORITY;
     apcData->ctrl.timeout = 500000000;
     Fg_registerApcHandler(currentFg, 0, &apcData->ctrl, FG_APC_CONTROL_BASIC);
+
 }
 
 int CGrabber::getDMALength()
 {
-    return width*height*bytesperpixel;
+    return getImageWidth()*getImageHeight()*bytesperpixel;
 }
 
 bool CGrabber::setOutWidth(int _w){
