@@ -2,6 +2,7 @@
 #include <QTime>
 CGrabber* instance = nullptr;
 int callbackFromGrabber(frameindex_t picNr, void *){
+    qDebug() << "[Callback]get into the grabber callback function.";
     uchar *buffer = (uchar*)Fg_getImagePtrEx(instance->getFg(), picNr, 0, instance->getDMAOut());
     QImage outputImage = QImage(buffer, instance->getImageWidth(), instance->getImageHeight(), QImage::Format_Grayscale16);
 
@@ -25,7 +26,7 @@ CGrabber::CGrabber(QObject *parent)
     timer = new QElapsedTimer;
     dialog = new CGrabberDialog;
     dialog->setGrabber(this);
-    connect(this, &CGrabber::updateInformation, dialog, &CGrabberDialog::updateInformation);
+//    connect(this, &CGrabber::updateInformation, dialog, &CGrabberDialog::updateInformation);
 }
 
 CGrabber::~CGrabber()
@@ -42,6 +43,7 @@ CGrabber::~CGrabber()
 bool CGrabber::loadApplet(QString path)
 {
     currentFg = Fg_Init(path.toStdString().c_str(), 0);
+    qDebug() << currentFg;
     if(currentFg == 0){
         qDebug() << ("Failed to load an applet file." + QString(Fg_getLastErrorDescription(currentFg)));
         return false;
@@ -167,27 +169,27 @@ int CGrabber::getYOffset()
 bool CGrabber::setImageWidth(int _w)
 {
 
-    Fg_setParameterWithType(currentFg, getParameterId("Device1_Process0_Implementation_ShadingCorrection_EasyRamLUT_IS_GreaterEqual_Number"), _w, 0);
-    Fg_setParameterWithType(currentFg, getParameterId("Device1_Process0_Implementation_SplitLine_LineLength"), _w*2, 0); // Split line should be the double of the width.
-    Fg_setParameterWithType(currentFg, getParameterId("Device1_Process0_Implementation_ShadingCorrection_Cal_Data_XLength"), ceil(_w / 12), 0);
-    auto error = Fg_setParameterWithType(currentFg, getParameterId("Device1_Process0_Implementation_ROI_X_Length"), _w, 0);
-    if(error != 0 ){
-        qDebug() << "Error :" << Fg_getErrorDescription(currentFg, error);
-        return false;
-    }
-    emit updateInformation();
+//    Fg_setParameterWithType(currentFg, getParameterId("Device1_Process0_Implementation_ShadingCorrection_EasyRamLUT_IS_GreaterEqual_Number"), _w, 0);
+//    Fg_setParameterWithType(currentFg, getParameterId("Device1_Process0_Implementation_SplitLine_LineLength"), _w*2, 0); // Split line should be the double of the width.
+//    Fg_setParameterWithType(currentFg, getParameterId("Device1_Process0_Implementation_ShadingCorrection_Cal_Data_XLength"), ceil(_w / 12), 0);
+//    auto error = Fg_setParameterWithType(currentFg, getParameterId("Device1_Process0_Implementation_ROI_X_Length"), _w, 0);
+//    if(error != 0 ){
+//        qDebug() << "Error :" << Fg_getErrorDescription(currentFg, error);
+//        return false;
+//    }
+//    emit updateInformation();
     return true;
 }
 
 bool CGrabber::setImageHeight(int _h)
 {
-    Fg_setParameterWithType(currentFg, getParameterId("Device1_Process0_Implementation_ShadingCorrection_EasyRamLUT_CreateBlankImage_ImageHeight"), _h, 0);
-    auto error = Fg_setParameterWithType(currentFg, getParameterId("Device1_Process0_Implementation_ROI_Y_Length"), _h, 0);
-    if(error != 0 ){
-        qDebug() << "Error :" << Fg_getErrorDescription(currentFg, error);
-        return false;
-    }
-    emit updateInformation();
+//    Fg_setParameterWithType(currentFg, getParameterId("Device1_Process0_Implementation_ShadingCorrection_EasyRamLUT_CreateBlankImage_ImageHeight"), _h, 0);
+//    auto error = Fg_setParameterWithType(currentFg, getParameterId("Device1_Process0_Implementation_ROI_Y_Length"), _h, 0);
+//    if(error != 0 ){
+//        qDebug() << "Error :" << Fg_getErrorDescription(currentFg, error);
+//        return false;
+//    }
+//    emit updateInformation();
     return true;
 }
 
@@ -381,6 +383,11 @@ void CGrabber::stopGrabbing()
     qDebug() << "Stop Grabbing command result DMA0:" << Fg_getErrorDescription(currentFg, a) << "DMA1:" << Fg_getErrorDescription(currentFg,b);
 }
 
+void CGrabber::saveConfig(QString path)
+{
+    Fg_saveConfig(currentFg, path.toStdString().c_str());
+}
+
 void CGrabber::convertToGrabberImage(unsigned short *buffer)
 {
     if(isRunning){
@@ -388,7 +395,7 @@ void CGrabber::convertToGrabberImage(unsigned short *buffer)
         size_t dmaLen = getDMALength();
         memcpy(imgBuffer, buffer, dmaLen);
         auto error = SHalSetBufferStatus(vaDevice, DMAInverse, ((dmaLen / 4) << 32) | 0, FG_SELECT_BUFFER );
-        if(error != 0) qDebug() << Fg_getErrorDescription(currentFg, error);
+        if(error != 0) qDebug() << "Set buffer status error: " << Fg_getErrorDescription(currentFg, error);
     }
 }
 

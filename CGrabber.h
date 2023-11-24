@@ -84,6 +84,7 @@ public:
     bool isRunning = false;
     QElapsedTimer *timer;
     QDialog *getDialog(){ return dynamic_cast<QDialog*>(dialog);}
+    void saveConfig(QString path);
 
 public slots:
     void convertToGrabberImage(unsigned short *buffer);

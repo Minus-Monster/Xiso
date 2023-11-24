@@ -8,7 +8,7 @@
 
 #include "Detector.h"
 #include "CGrabber.h"
-
+#include "BrightContrastControl.h"
 
 QT_BEGIN_NAMESPACE
 namespace Ui { class MainWindow; }
@@ -28,6 +28,7 @@ public:
     void setDetector(Detector *d);
     void setMessage(QString message);
     void setROI();
+    void histogramEqualization(QImage &image);
 
 signals:
     void grabbingStart(int numFrame=0);
@@ -53,6 +54,7 @@ private:
 
     QMetaObject::Connection grabberConnect;
     QMetaObject::Connection detectorConnect;
+    BrightContrastControl *bcControl;
 
 };
 #endif // MAINWINDOW_H

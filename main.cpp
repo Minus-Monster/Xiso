@@ -17,7 +17,7 @@ int main(int argc, char *argv[])
     QApplication a(argc, argv);
     MainWindow w;
     window = &w;
-//    qInstallMessageHandler(setDebugMessage);
+    qInstallMessageHandler(setDebugMessage);
 
     CGrabber *g = new CGrabber;
     w.setGrabber(g);
@@ -38,7 +38,7 @@ int main(int argc, char *argv[])
         g->stopGrabbing();
         d->stopGrabbing();
     });
-    w.show();
+    w.showFullScreen();
 
     return a.exec();
 }

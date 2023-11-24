@@ -9,6 +9,7 @@ CONFIG += c++17
 #DEFINES += QT_DISABLE_DEPRECATED_BEFORE=0x060000    # disables all the APIs deprecated before Qt 6.0.0
 
 SOURCES += \
+    BrightContrastControl.cpp \
     CGrabber.cpp \
     CGrabberDialog.cpp \
     Detector.cpp \
@@ -18,6 +19,7 @@ SOURCES += \
 
 
 HEADERS += \
+    BrightContrastControl.h \
     CGrabber.h \
     CGrabberDialog.h \
     Detector.h \
@@ -28,6 +30,7 @@ HEADERS += \
     GraphicsWidget.h
 
 FORMS += \
+    BrightContrastControl.ui \
     CGrabberDialog.ui \
     DetectorDialog.ui \
     mainwindow.ui
@@ -70,7 +73,7 @@ contains(QMAKE_TARGET.arch, x86_64) {
 
 #include('../Qylon/Qylon.pri')
 
-#DESTDIR = '../Build/'
+DESTDIR = '../Build/'
 
 RESOURCES += \
     Resources.qrc

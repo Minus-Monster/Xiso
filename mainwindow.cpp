@@ -21,6 +21,10 @@ MainWindow::MainWindow(QWidget *parent)
     ui->frame->setLayout(layout);
 
     ui->dockWidget_debug->setVisible(true);
+    ui->dockWidget_detector->setVisible(false);
+    ui->dockWidget_panel->setVisible(false);
+    bcControl = new BrightContrastControl;
+    //    bcControl->show();
 
 
     connect(ui->actionPanel, &QAction::triggered, ui->dockWidget_panel, &QDockWidget::setVisible);
@@ -34,9 +38,9 @@ MainWindow::MainWindow(QWidget *parent)
         timer->start();
         emit grabbingStart(cnt);
 
-        //        this->grabber->continuousGrabbing();
-        //        QImage *img = new QImage("C:/Users/minwoo/Desktop/Minu/Xiso/noCal.tif");
-        //        this->grabber->convertToGrabberImage((unsigned short*)img->bits());
+//                this->grabber->continuousGrabbing();
+//                QImage *img = new QImage("C:/Users/minwoo/Desktop/Minu/CalTest/Test_Raw.tiff");
+//                this->grabber->convertToGrabberImage((unsigned short*)img->bits());
 
     });
     // Continuous grabbing
@@ -63,7 +67,7 @@ MainWindow::MainWindow(QWidget *parent)
         // need to capture X frames and save that frames in the specific folder.
 
         grabber->setCalibMode(true);
-//        detector->setSaveMode(false); // need to revise this code. threading error.
+        //        detector->setSaveMode(false); // need to revise this code. threading error.
     });
     // bright calib
     connect(ui->pushButton_bright, &QPushButton::clicked, this, [this](){
@@ -78,7 +82,7 @@ MainWindow::MainWindow(QWidget *parent)
         detector->sequentialGrabbing(ui->spinBox_calibCount->value());
 
         grabber->setCalibMode(true);
-//        detector->setSaveMode(false);
+        //        detector->setSaveMode(false);
     });
     // calib out
     connect(ui->pushButton_out, &QPushButton::clicked, this, [this](){
@@ -140,14 +144,15 @@ MainWindow::MainWindow(QWidget *parent)
         back.save(darkCalPath +"/BB.tiff");
         */
 
+        /*
         SisoIoImageEngine* imageHandle0 = NULL;
         int m_iWidth = this->ui->spinBox_width->value(); // Need to edit
         int m_iHeight = this->ui->spinBox_height->value(); // Need to edit
         int nByte = 2;
         int nAvgCount = ui->spinBox_calibCount->value();
 
-                darkCalPath = "C:/Users/User/Desktop/Minu/Xiso/Cal";
-                brightCalPath = "C:/Users/User/Desktop/Minu/Xiso/Cal";
+        darkCalPath = "C:/Users/User/Desktop/Minu/Xiso/Cal";
+        brightCalPath = "C:/Users/User/Desktop/Minu/Xiso/Cal";
         cal_Data0 = new unsigned char[(long long)m_iWidth*m_iHeight];
         cal_Data1 = new unsigned char[(long long)m_iWidth*m_iHeight];
         cal_Data2 = new unsigned char[(long long)m_iWidth*m_iHeight];
@@ -175,15 +180,9 @@ MainWindow::MainWindow(QWidget *parent)
 
         qDebug() << nAvgCount;
         for (int n = 0; n < nAvgCount; n++){
-            qDebug() << "Opening dark cal path" <<(darkCalPath + "/DarkRaw" + QString::number(n) + ".tiff");
             // convert the path
             QString originalPath = (darkCalPath + "/DarkRaw" + QString::number(n) + ".tiff");
-            auto editedPath = QDir::toNativeSeparators((darkCalPath + "/DarkRaw" + QString::number(n) + ".tiff"));
-            qDebug() << "Edited" << editedPath;
             auto error = IoImageOpen(originalPath.toStdString().c_str(), &imageHandle0);
-
-//            auto error = IoImageOpen("C:/Users/User/Desktop/Minu/Xiso/Cal/DarkRaw") + std::to_string(n)
-//                                      + std::string(".tiff")).c_str(), &imageHandle0);
             if(error == 0){
                 qDebug() << "Error";
                 Temp = (unsigned short*)IoImageGetData(imageHandle0);
@@ -218,105 +217,6 @@ MainWindow::MainWindow(QWidget *parent)
         IoFreeImage(imageHandle0);
         imageHandle0 = NULL;
 
-        /*
-        imageHandle0 = NULL;
-        for (int n = 2; n < 4; n++){
-            auto error = IoImageOpen((darkCalPath + "/DarkRaw" + QString::number(n) + ".tiff").toStdString().c_str(), &imageHandle0);
-            if(error == 0){
-
-                Temp = (unsigned short*)IoImageGetData(imageHandle0);
-
-                for (int i = 0; i < m_iHeight; i++){
-                    for (int j = 0; j < m_iWidth; j++){
-                    }
-                }
-            }
-        }
-        IoFreeImage(imageHandle0);
-        imageHandle0 = NULL;
-        for (int n = 4; n < 6; n++){
-            auto error = IoImageOpen((darkCalPath + "/DarkRaw" + QString::number(n) + ".tiff").toStdString().c_str(), &imageHandle0);
-            if(error == 0){
-
-                Temp = (unsigned short*)IoImageGetData(imageHandle0);
-
-                for (int i = 0; i < m_iHeight; i++){
-                    for (int j = 0; j < m_iWidth; j++){
-                    }
-                }
-            }
-        }
-        IoFreeImage(imageHandle0);
-        imageHandle0 = NULL;
-        for (int n = 6; n < 8; n++){
-            auto error = IoImageOpen((darkCalPath + "/DarkRaw" + QString::number(n) + ".tiff").toStdString().c_str(), &imageHandle0);
-            if(error == 0){
-
-                Temp = (unsigned short*)IoImageGetData(imageHandle0);
-
-                for (int i = 0; i < m_iHeight; i++){
-                    for (int j = 0; j < m_iWidth; j++){
-                    }
-                }
-            }
-        }
-        IoFreeImage(imageHandle0);
-        imageHandle0 = NULL;
-        for (int n = 8; n < 10; n++){
-            auto error = IoImageOpen((darkCalPath + "/DarkRaw" + QString::number(n) + ".tiff").toStdString().c_str(), &imageHandle0);
-            if(error == 0){
-
-                Temp = (unsigned short*)IoImageGetData(imageHandle0);
-
-                for (int i = 0; i < m_iHeight; i++){
-                    for (int j = 0; j < m_iWidth; j++){
-                    }
-                }
-            }
-        }
-        IoFreeImage(imageHandle0);
-        imageHandle0 = NULL;
-        for (int n = 10; n < 12; n++){
-            auto error = IoImageOpen((darkCalPath + "/DarkRaw" + QString::number(n) + ".tiff").toStdString().c_str(), &imageHandle0);
-            if(error == 0){
-
-                Temp = (unsigned short*)IoImageGetData(imageHandle0);
-
-                for (int i = 0; i < m_iHeight; i++){
-                    for (int j = 0; j < m_iWidth; j++){
-                    }
-                }
-            }
-        }
-        IoFreeImage(imageHandle0);
-        imageHandle0 = NULL;
-        for (int n = 12; n < 14; n++){
-            auto error = IoImageOpen((darkCalPath + "/DarkRaw" + QString::number(n) + ".tiff").toStdString().c_str(), &imageHandle0);
-            if(error == 0){
-
-                Temp = (unsigned short*)IoImageGetData(imageHandle0);
-
-                for (int i = 0; i < m_iHeight; i++){
-                    for (int j = 0; j < m_iWidth; j++){
-                    }
-                }
-            }
-        }
-        IoFreeImage(imageHandle0);
-        imageHandle0 = NULL;
-        for (int n = 14; n < 16; n++){
-            auto error = IoImageOpen((darkCalPath + "/DarkRaw" + QString::number(n) + ".tiff").toStdString().c_str(), &imageHandle0);
-            if(error == 0){
-
-                Temp = (unsigned short*)IoImageGetData(imageHandle0);
-
-                for (int i = 0; i < m_iHeight; i++){
-                    for (int j = 0; j < m_iWidth; j++){
-                    }
-                }
-            }
-        }
-*/
         for (int i = 0; i < m_iHeight; i++){
             for (int j = 0; j < m_iWidth; j++){
                 AveImg[i * m_iWidth + j] = ((Temp1[i * m_iWidth + j]) + (Temp2[i * m_iWidth + j]) + (Temp3[i * m_iWidth + j])+(Temp4[i * m_iWidth + j])+ (Temp5[i * m_iWidth + j])+ (Temp6[i * m_iWidth + j])+ (Temp7[i * m_iWidth + j])+ (Temp8[i * m_iWidth + j])) / nAvgCount;
@@ -334,9 +234,6 @@ MainWindow::MainWindow(QWidget *parent)
         }
         IoWriteTiff((darkCalPath + "/D1.tiff").toStdString().c_str(), cal_Data0, m_iWidth, m_iHeight, 8, 1);
         IoWriteTiff((darkCalPath + "/D2.tiff").toStdString().c_str(), cal_Data1, m_iWidth, m_iHeight, 8, 1);
-
-
-
 
         // WhiteCal
 
@@ -374,116 +271,7 @@ MainWindow::MainWindow(QWidget *parent)
         }
         IoFreeImage(imageHandle0);
         imageHandle0 = NULL;
-        /*
 
-        for (int n = 2; n < 4; n++){
-            error = IoImageOpen((brightCalPath + "/WhiteRaw" + QString::number(n) + ".tiff").toStdString().c_str(), &imageHandle0);
-            if (error == 0){
-                Temp = (unsigned short*)IoImageGetData(imageHandle0);
-                for (int i = 0; i < m_iHeight; i++){
-                    for (int j = 0; j < m_iWidth; j++){
-                        Temp2[i * m_iWidth + j] += (Temp[i * m_iWidth + j]);
-                    }
-                }
-            }
-        }
-        IoFreeImage(imageHandle0);
-        imageHandle0 = NULL;
-        for (int n = 4; n < 6; n++){
-            error = IoImageOpen((brightCalPath + "/WhiteRaw" + QString::number(n) + ".tiff").toStdString().c_str(), &imageHandle0);
-            if (error == 0){
-                Temp = (unsigned short*)IoImageGetData(imageHandle0);
-
-                for (int i = 0; i < m_iHeight; i++){
-                    for (int j = 0; j < m_iWidth; j++){
-                        Temp3[i * m_iWidth + j] += (Temp[i * m_iWidth + j]);
-                    }
-                }
-            }
-        }
-        IoFreeImage(imageHandle0);
-        imageHandle0 = NULL;
-        for (int n = 6; n < 8; n++){
-            error = IoImageOpen((brightCalPath + "/WhiteRaw" + QString::number(n) + ".tiff").toStdString().c_str(), &imageHandle0);
-            if (error == 0){
-                Temp = (unsigned short*)IoImageGetData(imageHandle0);
-
-                for (int i = 0; i < m_iHeight; i++){
-                    for (int j = 0; j < m_iWidth; j++){
-                        Temp4[i * m_iWidth + j] += (Temp[i * m_iWidth + j]);
-                    }
-                }
-            }
-        }
-        IoFreeImage(imageHandle0);
-        imageHandle0 = NULL;
-        for (int n = 8; n < 10; n++){
-            error = IoImageOpen((brightCalPath + "/WhiteRaw" + QString::number(n) + ".tiff").toStdString().c_str(), &imageHandle0);
-            if (error == 0){
-                Temp = (unsigned short*)IoImageGetData(imageHandle0);
-
-                for (int i = 0; i < m_iHeight; i++){
-                    for (int j = 0; j < m_iWidth; j++){
-                        Temp5[i * m_iWidth + j] += (Temp[i * m_iWidth + j]);
-                    }
-                }
-            }
-        }
-        IoFreeImage(imageHandle0);
-        imageHandle0 = NULL;
-        for (int n = 10; n < 12; n++){
-            error = IoImageOpen((brightCalPath + "/WhiteRaw" + QString::number(n) + ".tiff").toStdString().c_str(), &imageHandle0);
-            if (error == 0){
-                Temp = (unsigned short*)IoImageGetData(imageHandle0);
-
-                for (int i = 0; i < m_iHeight; i++){
-                    for (int j = 0; j < m_iWidth; j++)
-                    {
-                        Temp6[i * m_iWidth + j] += (Temp[i * m_iWidth + j]);
-
-                    }
-                }
-            }
-        }
-        IoFreeImage(imageHandle0);
-        imageHandle0 = NULL;
-        for (int n = 12; n < 14; n++)
-        {
-            error = IoImageOpen((brightCalPath + "/WhiteRaw" + QString::number(n) + ".tiff").toStdString().c_str(), &imageHandle0);
-            if (error == 0)
-            {
-                Temp = (unsigned short*)IoImageGetData(imageHandle0);
-
-                for (int i = 0; i < m_iHeight; i++)
-                {
-                    for (int j = 0; j < m_iWidth; j++)
-                    {
-                        Temp7[i * m_iWidth + j] += (Temp[i * m_iWidth + j]);
-
-                    }
-                }
-            }
-        }
-        IoFreeImage(imageHandle0);
-        imageHandle0 = NULL;
-        for (int n = 14; n < 16; n++)
-        {
-            error = IoImageOpen((brightCalPath + "/WhiteRaw" + QString::number(n) + ".tiff").toStdString().c_str(), &imageHandle0);
-            if (error == 0)
-            {
-                Temp = (unsigned short*)IoImageGetData(imageHandle0);
-
-                for (int i = 0; i < m_iHeight; i++)
-                {
-                    for (int j = 0; j < m_iWidth; j++)
-                    {
-                        Temp8[i * m_iWidth + j] += (Temp[i * m_iWidth + j]);
-
-                    }
-                }
-            }
-        }
-*/
         for (int i = 0; i < m_iHeight; i++){
             for (int j = 0; j < m_iWidth; j++){
                 AveImg[i * m_iWidth + j] = ((Temp1[i * m_iWidth + j]) + (Temp2[i * m_iWidth + j]) + (Temp3[i * m_iWidth + j])+(Temp4[i * m_iWidth + j])+ (Temp5[i * m_iWidth + j])+ (Temp6[i * m_iWidth + j])+ (Temp7[i * m_iWidth + j])+ (Temp8[i * m_iWidth + j])) / nAvgCount;
@@ -515,19 +303,42 @@ MainWindow::MainWindow(QWidget *parent)
         delete []Temp3;
         delete []Temp2;
         delete []Temp1;
-
+*/
         // Making a lookup table.
 
+        int m_iWidth = 2800;
+        int m_iHeight = 600;
+
+        SisoIoImageEngine* imageHandle0 = nullptr;
+        const unsigned char* B1 = nullptr;
+        auto error = IoImageOpen("C:/Users/minwoo/Desktop/Minu/CalTest/B1.tiff", &imageHandle0);
+        B1 = (const unsigned char*)IoImageGetData(imageHandle0);
+
+        const unsigned char* B2 = nullptr;
+        error = IoImageOpen("C:/Users/minwoo/Desktop/Minu/CalTest/B2.tiff", &imageHandle0);
+        B2 = (const unsigned char*)IoImageGetData(imageHandle0);
+
+        const unsigned char* D1 = nullptr;
+        error = IoImageOpen("C:/Users/minwoo/Desktop/Minu/CalTest/D1.tiff", &imageHandle0);
+        D1 = (const unsigned char*)IoImageGetData(imageHandle0);
+
+        const unsigned char* D2 = nullptr;
+        error = IoImageOpen("C:/Users/minwoo/Desktop/Minu/CalTest/D2.tiff", &imageHandle0);
+        D2 = (const unsigned char*)IoImageGetData(imageHandle0);
+        // C:/Users/minwoo/Desktop/Minu/CalTest/B1.tiff
+        // C:/Users/minwoo/Desktop/Minu/CalTest/B2.tiff
+        // C:/Users/minwoo/Desktop/Minu/CalTest/D1.tiff
+        // C:/Users/minwoo/Desktop/Minu/CalTest/D1.tiff
 
         std::ofstream lutfile;
-        lutfile.open("C:/5608/2800.txt");
+        lutfile.open("C:/Users/minwoo/Desktop/Minu/CalTest/2800TT.txt");
         int cnt = 0;
         for (int h = 0; h < m_iHeight; h++) {
             for (int w = 0; w < m_iWidth; w++) {
-                unsigned int d1_p = (unsigned int) cal_Data0[cnt];
-                unsigned int d2_p = (unsigned int) cal_Data1[cnt];
-                unsigned int b1_p = (unsigned int) cal_Data2[cnt];
-                unsigned int b2_p = (unsigned int) cal_Data3[cnt];
+                unsigned int d1_p = (unsigned int) D1[cnt];
+                unsigned int d2_p = (unsigned int) D2[cnt];
+                unsigned int b1_p = (unsigned int) B1[cnt];
+                unsigned int b2_p = (unsigned int) B2[cnt];
 
                 unsigned int pixel = d1_p + (d2_p << 8) + (b1_p << 16) + (b2_p << 24);
                 lutfile << pixel << "\n";
@@ -539,7 +350,7 @@ MainWindow::MainWindow(QWidget *parent)
             //width/12 = ?    2800 / 12 = 233.333 -> 234? ??, 234 * 12= 2808 , 8 pixel ?? ??
             //width/12 = ?    2804 / 12 = 233.333 -> 234? ??, 234 * 12= 2808 , 8 pixel ?? ??
             if (m_iWidth % 12 != 0){
-                for (int dummy = 0; dummy < 8; dummy++)
+                for (int dummy = 0; dummy < 4; dummy++)
                     lutfile << 0 << "\n";
             }else{
                 for (int dummy = 0; dummy < 4; dummy++)
@@ -588,8 +399,10 @@ void MainWindow::setGrabber(CGrabber *c)
     ui->formLayout_grabber->addRow(grabber->getDialog());
     // Default Grabber
     grabberConnect = connect(this->grabber, &CGrabber::sendImage, this, [this](QImage image){
-        this->widget->setImage(image);
-//        qDebug() << "try to save images" << image.save("C:/Users/User/Desktop/tmpMinu/test.tiff");
+        auto gen = bcControl->convertImage(&image);
+
+        this->widget->setImage(gen);
+        //        qDebug() << "try to save images" << image.save("C:/Users/User/Desktop/tmpMinu/test.tiff");
         ui->statusbar->showMessage("Elapsed time : " + QString::number(timer->restart()));
     });
 
@@ -625,6 +438,4 @@ void MainWindow::setROI()
     this->detector->setWidth(width);
     this->detector->setHeight(height);
 }
-
-
 

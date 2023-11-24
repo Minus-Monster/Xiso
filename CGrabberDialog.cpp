@@ -163,8 +163,16 @@ CGrabberDialog::CGrabberDialog(QWidget *parent) :
             }
         });
         connect(ui->pushButton_testShot, &QPushButton::clicked, this, [this](){
+            qDebug() << "Test shot";
             QImage img(currentTestFilePath);
             this->grabber->convertToGrabberImage((unsigned short*)img.bits());
+        });
+        connect(ui->pushButton_saveMcf, &QPushButton::clicked, this, [this](){
+            QString path = QFileDialog::getSaveFileName(this, this->windowTitle(), QDir::currentPath(), ".mcf");
+            if(path.isEmpty()) return;
+
+            this->grabber->saveConfig(path);
+            qDebug() << "Save config called. ";
         });
         QMessageBox::information(this, this->windowTitle(), "Initialization is done.");
     });
@@ -183,6 +191,7 @@ void CGrabberDialog::setGrabber(CGrabber *_grabber)
 
 void CGrabberDialog::updateInformation()
 {
+
     // X, Y, WIDTH, HEIGHT
     ui->spinBox_width->setValue(grabber->getImageWidth());
     ui->spinBox_height->setValue(grabber->getImageHeight());
