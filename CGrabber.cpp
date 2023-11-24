@@ -385,7 +385,7 @@ void CGrabber::stopGrabbing()
 
 void CGrabber::saveConfig(QString path)
 {
-    Fg_saveConfig(currentFg, path.toStdString().c_str());
+    Fg_saveConfig(currentFg, (path + ".mcf").toStdString().c_str());
 }
 
 void CGrabber::convertToGrabberImage(unsigned short *buffer)
