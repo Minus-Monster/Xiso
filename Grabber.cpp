@@ -1,6 +1,6 @@
-#include "CGrabber.h"
+#include "Grabber.h"
 #include <QTime>
-CGrabber* instance = nullptr;
+Grabber* instance = nullptr;
 int callbackFromGrabber(frameindex_t picNr, void *){
     qDebug() << "[Callback]get into the grabber callback function.";
     uchar *buffer = (uchar*)Fg_getImagePtrEx(instance->getFg(), picNr, 0, instance->getDMAOut());
@@ -19,17 +19,17 @@ int callbackFromGrabber(frameindex_t picNr, void *){
     return 0;
 }
 
-CGrabber::CGrabber(QObject *parent)
+Grabber::Grabber(QObject *parent)
     : QObject{parent}
 {
     instance = this;
     timer = new QElapsedTimer;
-    dialog = new CGrabberDialog;
+    dialog = new GrabberDialog;
     dialog->setGrabber(this);
-//    connect(this, &CGrabber::updateInformation, dialog, &CGrabberDialog::updateInformation);
+//    connect(this, &Grabber::updateInformation, dialog, &GrabberDialog::updateInformation);
 }
 
-CGrabber::~CGrabber()
+Grabber::~Grabber()
 {
     Fg_FreeMemEx(currentFg, DMAInverse);
     Fg_FreeMemEx(currentFg, DMAOut);
@@ -40,7 +40,7 @@ CGrabber::~CGrabber()
     Fg_FreeGrabber(currentFg);
 }
 
-bool CGrabber::loadApplet(QString path)
+bool Grabber::loadApplet(QString path)
 {
     currentFg = Fg_Init(path.toStdString().c_str(), 0);
     qDebug() << currentFg;
@@ -52,7 +52,7 @@ bool CGrabber::loadApplet(QString path)
     return true;
 }
 
-bool CGrabber::loadConfiguration(QString path)
+bool Grabber::loadConfiguration(QString path)
 {
     if(currentFg == nullptr){
         qDebug() << ("Grabber is not initialized.");
@@ -67,7 +67,7 @@ bool CGrabber::loadConfiguration(QString path)
     return true;
 }
 
-void CGrabber::initialize()
+void Grabber::initialize()
 {
     vaDevice = SHalInitDevice(0);
 
@@ -90,12 +90,12 @@ void CGrabber::initialize()
 
 }
 
-int CGrabber::getDMALength()
+int Grabber::getDMALength()
 {
     return getImageWidth()*getImageHeight()*bytesperpixel;
 }
 
-bool CGrabber::setOutWidth(int _w){
+bool Grabber::setOutWidth(int _w){
 
     width = _w;
     auto error = Fg_setParameter(currentFg, FG_WIDTH, &width, 0);
@@ -107,13 +107,13 @@ bool CGrabber::setOutWidth(int _w){
     return true;
 }
 
-int CGrabber::getOutWidth(){
+int Grabber::getOutWidth(){
     int value=0;
     Fg_getParameter(currentFg, FG_WIDTH, (void*)&value, 0);
     return value;
 }
 
-bool CGrabber::setOutHeight(int _h){
+bool Grabber::setOutHeight(int _h){
     height = _h;
     auto error = Fg_setParameter(currentFg, FG_HEIGHT, &height, 0);
     if(error != 0 ){
@@ -124,13 +124,13 @@ bool CGrabber::setOutHeight(int _h){
     return true;
 }
 
-int CGrabber::getOutHeight(){
+int Grabber::getOutHeight(){
     int value=0;
     Fg_getParameter(currentFg, FG_HEIGHT, (void*)&value, 0);
     return value;
 }
 
-bool CGrabber::setXOffset(int _x)
+bool Grabber::setXOffset(int _x)
 {
     auto error = Fg_setParameter(currentFg, FG_XOFFSET, &_x,0);
     if(error != 0 ){
@@ -141,14 +141,14 @@ bool CGrabber::setXOffset(int _x)
     return true;
 }
 
-int CGrabber::getXOffset()
+int Grabber::getXOffset()
 {
     int value=0;
     Fg_getParameter(currentFg, FG_XOFFSET, &value, 0);
     return value;
 }
 
-bool CGrabber::setYOffset(int _y)
+bool Grabber::setYOffset(int _y)
 {
     auto error = Fg_setParameter(currentFg, FG_YOFFSET, &_y,0);
     if(error != 0 ){
@@ -159,14 +159,14 @@ bool CGrabber::setYOffset(int _y)
     return true;
 }
 
-int CGrabber::getYOffset()
+int Grabber::getYOffset()
 {
     int value=0;
     Fg_getParameter(currentFg, FG_YOFFSET, &value, 0);
     return value;
 }
 
-bool CGrabber::setImageWidth(int _w)
+bool Grabber::setImageWidth(int _w)
 {
 
 //    Fg_setParameterWithType(currentFg, getParameterId("Device1_Process0_Implementation_ShadingCorrection_EasyRamLUT_IS_GreaterEqual_Number"), _w, 0);
@@ -181,7 +181,7 @@ bool CGrabber::setImageWidth(int _w)
     return true;
 }
 
-bool CGrabber::setImageHeight(int _h)
+bool Grabber::setImageHeight(int _h)
 {
 //    Fg_setParameterWithType(currentFg, getParameterId("Device1_Process0_Implementation_ShadingCorrection_EasyRamLUT_CreateBlankImage_ImageHeight"), _h, 0);
 //    auto error = Fg_setParameterWithType(currentFg, getParameterId("Device1_Process0_Implementation_ROI_Y_Length"), _h, 0);
@@ -193,14 +193,14 @@ bool CGrabber::setImageHeight(int _h)
     return true;
 }
 
-int CGrabber::getImageWidth()
+int Grabber::getImageWidth()
 {
     int value=0;
     Fg_getParameterWithType(currentFg, getParameterId("Device1_Process0_Implementation_ROI_X_Length"), &value, 0);
     return value;
 }
 
-int CGrabber::getImageHeight()
+int Grabber::getImageHeight()
 {
     int value=0;
     Fg_getParameterWithType(currentFg, getParameterId("Device1_Process0_Implementation_ROI_Y_Length"), &value, 0);
@@ -208,7 +208,7 @@ int CGrabber::getImageHeight()
 }
 
 
-bool CGrabber::setShadingCorrectionEnable(bool on)
+bool Grabber::setShadingCorrectionEnable(bool on)
 {
     auto error = Fg_setParameterWithType(currentFg, getParameterId("Device1_Process0_Implementation_ShadingCorrection_Shading_Enable_Value"), on, 0);
     if(error != 0 ){
@@ -219,13 +219,13 @@ bool CGrabber::setShadingCorrectionEnable(bool on)
     return true;
 }
 
-bool CGrabber::getShadingCorrectionEnable()
+bool Grabber::getShadingCorrectionEnable()
 {
     int value=0;
     Fg_getParameterWithType(currentFg, getParameterId("Device1_Process0_Implementation_ShadingCorrection_Shading_Enable_Value"), &value, 0);
     return value;
 }//Device1_Process0_Implementation_DeadPixelInterpolation_Enable_Value
-bool CGrabber::setDeadPixelInterpolation(bool on)
+bool Grabber::setDeadPixelInterpolation(bool on)
 {
     auto error = Fg_setParameterWithType(currentFg, getParameterId("Device1_Process0_Implementation_DeadPixelInterpolation_Enable_Value"), on, 0);
     if(error != 0 ){
@@ -236,14 +236,14 @@ bool CGrabber::setDeadPixelInterpolation(bool on)
     return true;
 }
 
-bool CGrabber::getDeadPixelInterpolation()
+bool Grabber::getDeadPixelInterpolation()
 {
     int value=0;
     Fg_getParameterWithType(currentFg, getParameterId("Device1_Process0_Implementation_DeadPixelInterpolation_Enable_Value"), &value, 0);
     return value;
 }
 //Device1_Process0_Implementation_Remove_Dark_Line_H_Enable_Value
-bool CGrabber::setRemovingDarkH(bool on)
+bool Grabber::setRemovingDarkH(bool on)
 {
     auto error = Fg_setParameterWithType(currentFg, getParameterId("Device1_Process0_Implementation_Remove_Dark_Line_H_Enable_Value"), on, 0);
     if(error != 0 ){
@@ -254,14 +254,14 @@ bool CGrabber::setRemovingDarkH(bool on)
     return true;
 }
 
-bool CGrabber::getRemovingDarkH()
+bool Grabber::getRemovingDarkH()
 {
     int value=0;
     Fg_getParameterWithType(currentFg, getParameterId("Device1_Process0_Implementation_Remove_Dark_Line_H_Enable_Value"), &value, 0);
     return value;
 }
 //Device1_Process0_Implementation_Remove_Dark_Line_Enable_Value
-bool CGrabber::setRemovingDarkV(bool on)
+bool Grabber::setRemovingDarkV(bool on)
 {
     auto error = Fg_setParameterWithType(currentFg, getParameterId("Device1_Process0_Implementation_Remove_Dark_Line_Enable_Value"), on, 0);
     if(error != 0 ){
@@ -272,14 +272,14 @@ bool CGrabber::setRemovingDarkV(bool on)
     return true;
 }
 
-bool CGrabber::getRemovingDarkV()
+bool Grabber::getRemovingDarkV()
 {
     int value=0;
     Fg_getParameterWithType(currentFg, getParameterId("Device1_Process0_Implementation_Remove_Dark_Line_Enable_Value"), &value, 0);
     return value;
 }
 // Device1_Process0_Implementation_ShadingCorrection_Shading_OverSaturation_Value=1200;
-bool CGrabber::setOverSaturation(int _v)
+bool Grabber::setOverSaturation(int _v)
 {
     auto error =Fg_setParameterWithType(currentFg, getParameterId("Device1_Process0_Implementation_ShadingCorrection_Shading_OverSaturation_Value"), _v, 0);
     if(error != 0 ){
@@ -290,14 +290,14 @@ bool CGrabber::setOverSaturation(int _v)
     return true;
 }
 
-int CGrabber::getOverSaturation()
+int Grabber::getOverSaturation()
 {
     int value=0;
     Fg_getParameterWithType(currentFg, getParameterId("Device1_Process0_Implementation_ShadingCorrection_Shading_OverSaturation_Value"), &value, 0);
     return value;
 }
 //Device1_Process0_Implementation_ShadingCorrection_EasyRamLUT_mE6RamLUT_InitFileName
-bool CGrabber::setLUTFileName(QString fileName)
+bool Grabber::setLUTFileName(QString fileName)
 {
     auto error = Fg_setParameterWithType(currentFg, getParameterId("Device1_Process0_Implementation_ShadingCorrection_EasyRamLUT_mE6RamLUT_InitFileName"), fileName.toStdString(), 0);
     if(error != 0 ){
@@ -308,7 +308,7 @@ bool CGrabber::setLUTFileName(QString fileName)
     return true;
 }
 
-QString CGrabber::getLUTFileName()
+QString Grabber::getLUTFileName()
 {
     std::string value;
     Fg_getParameterWithType(currentFg, getParameterId("Device1_Process0_Implementation_ShadingCorrection_EasyRamLUT_mE6RamLUT_InitFileName"), value, 0);
@@ -317,7 +317,7 @@ QString CGrabber::getLUTFileName()
 }
 
 //Device1_Process0_Implementation_ShadingCorrection_EasyRamLUT_mE6RamLUT_LoadInitFile=1;
-bool CGrabber::setInitFile(bool on)
+bool Grabber::setInitFile(bool on)
 {
     auto error = Fg_setParameterWithType(currentFg, getParameterId("Device1_Process0_Implementation_ShadingCorrection_EasyRamLUT_mE6RamLUT_LoadInitFile"), on, 0);
     if(error != 0 ){
@@ -328,19 +328,19 @@ bool CGrabber::setInitFile(bool on)
     return true;
 
 }
-bool CGrabber::getInitFile()
+bool Grabber::getInitFile()
 {
     int value=0;
     Fg_getParameterWithType(currentFg, getParameterId("Device1_Process0_Implementation_ShadingCorrection_EasyRamLUT_mE6RamLUT_LoadInitFile"), &value, 0);
     return value;
 }
 
-int CGrabber::getParameterId(QString parameter)
+int Grabber::getParameterId(QString parameter)
 {
     return Fg_getParameterIdByName(currentFg, parameter.toStdString().c_str());
 }
 
-void CGrabber::setCalibMode(bool on)
+void Grabber::setCalibMode(bool on)
 {
     Fg_setParameterWithType(currentFg, getParameterId("Device1_Process0_Implementation_ShadingCorrection_Shading_Enable_Value"), on, 0);
     Fg_setParameterWithType(currentFg, getParameterId("Device1_Process0_Implementation_DeadPixelInterpolation_Enable_Value"), on, 0);
@@ -351,7 +351,7 @@ void CGrabber::setCalibMode(bool on)
 
 }
 
-void CGrabber::sequentialGrabbing(int numFrame)
+void Grabber::sequentialGrabbing(int numFrame)
 {
     isRunning = true;
     setContinuous(false);
@@ -361,7 +361,7 @@ void CGrabber::sequentialGrabbing(int numFrame)
     qDebug() << "Sequential Grabbing command result DMA0:" << Fg_getErrorDescription(currentFg, a) << "DMA1:" << Fg_getErrorDescription(currentFg,b);
 }
 
-void CGrabber::continuousGrabbing()
+void Grabber::continuousGrabbing()
 {
     isRunning = true;
     setContinuous(true);
@@ -372,7 +372,7 @@ void CGrabber::continuousGrabbing()
 
 }
 
-void CGrabber::stopGrabbing()
+void Grabber::stopGrabbing()
 {
     isRunning = false;
     sequentialNumFrame = 0;
@@ -383,12 +383,12 @@ void CGrabber::stopGrabbing()
     qDebug() << "Stop Grabbing command result DMA0:" << Fg_getErrorDescription(currentFg, a) << "DMA1:" << Fg_getErrorDescription(currentFg,b);
 }
 
-void CGrabber::saveConfig(QString path)
+void Grabber::saveConfig(QString path)
 {
     Fg_saveConfig(currentFg, (path + ".mcf").toStdString().c_str());
 }
 
-void CGrabber::convertToGrabberImage(unsigned short *buffer)
+void Grabber::convertToGrabberImage(unsigned short *buffer)
 {
     if(isRunning){
         timer->restart();

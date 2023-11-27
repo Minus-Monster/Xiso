@@ -1,12 +1,12 @@
-#include "CGrabberDialog.h"
-#include "ui_CGrabberDialog.h"
-#include "CGrabber.h"
+#include "GrabberDialog.h"
+#include "ui_GrabberDialog.h"
+#include "Grabber.h"
 #include <QFileDialog>
 #include <QMessageBox>
 
-CGrabberDialog::CGrabberDialog(QWidget *parent) :
+GrabberDialog::GrabberDialog(QWidget *parent) :
     QDialog(parent),
-    ui(new Ui::CGrabberDialog)
+    ui(new Ui::GrabberDialog)
 {
     ui->setupUi(this);
     setWindowTitle("Basler Framegrabber Settings");
@@ -163,9 +163,9 @@ CGrabberDialog::CGrabberDialog(QWidget *parent) :
             }
         });
         connect(ui->pushButton_testShot, &QPushButton::clicked, this, [this](){
-            qDebug() << "Test shot";
             QImage img(currentTestFilePath);
             this->grabber->convertToGrabberImage((unsigned short*)img.bits());
+            qDebug() << "Test image is sent to this grabber.";
         });
         connect(ui->pushButton_saveMcf, &QPushButton::clicked, this, [this](){
             QString path = QFileDialog::getSaveFileName(this, this->windowTitle(), QDir::currentPath(), ".mcf");
@@ -179,17 +179,17 @@ CGrabberDialog::CGrabberDialog(QWidget *parent) :
 
 }
 
-CGrabberDialog::~CGrabberDialog()
+GrabberDialog::~GrabberDialog()
 {
     delete ui;
 }
 
-void CGrabberDialog::setGrabber(CGrabber *_grabber)
+void GrabberDialog::setGrabber(Grabber *_grabber)
 {
     grabber = _grabber;
 }
 
-void CGrabberDialog::updateInformation()
+void GrabberDialog::updateInformation()
 {
 
     // X, Y, WIDTH, HEIGHT

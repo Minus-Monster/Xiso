@@ -368,7 +368,7 @@ MainWindow::MainWindow(QWidget *parent)
         qDebug() << string << "mode is enabled.";
         if(string == "Grabber"){
             disconnect(detectorConnect);
-            grabberConnect = connect(this->grabber, &CGrabber::sendImage, this, [this](QImage image){
+            grabberConnect = connect(this->grabber, &Grabber::sendImage, this, [this](QImage image){
                 this->widget->setImage(image);
                 ui->statusbar->showMessage("Elapsed time : " + QString::number(timer->restart()));
             });
@@ -393,12 +393,12 @@ MainWindow::~MainWindow()
 
 
 /// GRABBER PART BEGINS ///
-void MainWindow::setGrabber(CGrabber *c)
+void MainWindow::setGrabber(Grabber *c)
 {
     grabber = c;
     ui->formLayout_grabber->addRow(grabber->getDialog());
     // Default Grabber
-    grabberConnect = connect(this->grabber, &CGrabber::sendImage, this, [this](QImage image){
+    grabberConnect = connect(this->grabber, &Grabber::sendImage, this, [this](QImage image){
         auto gen = bcControl->convertImage(&image);
 
         this->widget->setImage(gen);
@@ -412,8 +412,7 @@ void MainWindow::setDetector(Detector *d)
 {
     detector = d;
     ui->formLayout_detector->addRow(detector->getDialog());
-    connect(d, &Detector::sendBuffer, this->grabber, &CGrabber::convertToGrabberImage);
-
+    connect(d, &Detector::sendBuffer, this->grabber, &Grabber::convertToGrabberImage);
 }
 
 void MainWindow::setMessage(QString message)

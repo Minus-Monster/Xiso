@@ -10,20 +10,20 @@ CONFIG += c++17
 
 SOURCES += \
     BrightContrastControl.cpp \
-    CGrabber.cpp \
-    CGrabberDialog.cpp \
     Detector.cpp \
     DetectorDialog.cpp \
+    Grabber.cpp \
+    GrabberDialog.cpp \
     main.cpp \
     mainwindow.cpp \
 
 
 HEADERS += \
     BrightContrastControl.h \
-    CGrabber.h \
-    CGrabberDialog.h \
     Detector.h \
     DetectorDialog.h \
+    Grabber.h \
+    GrabberDialog.h \
     mainwindow.h \
     GraphicsScene.h \
     GraphicsView.h \
@@ -31,8 +31,8 @@ HEADERS += \
 
 FORMS += \
     BrightContrastControl.ui \
-    CGrabberDialog.ui \
     DetectorDialog.ui \
+    GrabberDialog.ui \
     mainwindow.ui
 
 # Default rules for deployment.

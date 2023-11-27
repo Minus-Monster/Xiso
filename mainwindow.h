@@ -7,7 +7,7 @@
 //#include "Modules/DebugConsole.h"
 
 #include "Detector.h"
-#include "CGrabber.h"
+#include "Grabber.h"
 #include "BrightContrastControl.h"
 
 QT_BEGIN_NAMESPACE
@@ -24,7 +24,7 @@ public:
     MainWindow(QWidget *parent = nullptr);
     ~MainWindow();
 
-    void setGrabber(CGrabber *c);
+    void setGrabber(Grabber *c);
     void setDetector(Detector *d);
     void setMessage(QString message);
     void setROI();
@@ -42,7 +42,7 @@ private:
     Qylon::GraphicsWidget *widget;
 //    Qylon::DebugConsole *console;
     QVBoxLayout *layout;
-    CGrabber *grabber;
+    Grabber *grabber;
     Detector *detector;
     QElapsedTimer *timer;
     QString darkCalPath="";

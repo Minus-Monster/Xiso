@@ -1,7 +1,7 @@
 //#include "Qylon.h"
 #include "mainwindow.h"
 #include "Detector.h"
-#include "CGrabber.h"
+#include "Grabber.h"
 #include <QApplication>
 #include <QFileDialog>
 #include <QTime>
@@ -19,7 +19,7 @@ int main(int argc, char *argv[])
     window = &w;
     qInstallMessageHandler(setDebugMessage);
 
-    CGrabber *g = new CGrabber;
+    Grabber *g = new Grabber;
     w.setGrabber(g);
 
     Detector *d = new Detector;
@@ -38,7 +38,7 @@ int main(int argc, char *argv[])
         g->stopGrabbing();
         d->stopGrabbing();
     });
-    w.showFullScreen();
+    w.showMaximized();
 
     return a.exec();
 }

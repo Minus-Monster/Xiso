@@ -1,11 +1,11 @@
-#ifndef CGRABBER_H
-#define CGRABBER_H
+#ifndef GRABBER_H
+#define GRABBER_H
 
 #include "basler_fg.h"
 #include "fg_struct.h"
 #include "sisoIo.h"
 #include "siso_hal.h"
-#include "CGrabberDialog.h"
+#include "GrabberDialog.h"
 
 #include <QObject>
 #include <QImage>
@@ -19,12 +19,12 @@ struct APC {
     int width;
     int height;
 };
-class CGrabber : public QObject
+class Grabber : public QObject
 {
     Q_OBJECT
 public:
-    explicit CGrabber(QObject *parent = nullptr);
-    ~CGrabber();
+    explicit Grabber(QObject *parent = nullptr);
+    ~Grabber();
     bool loadApplet(QString path);
     bool loadConfiguration(QString path);
     void initialize();
@@ -112,9 +112,9 @@ private:
     bool continuousMode = false;
     int sequentialNumFrame = 0;
 
-    CGrabberDialog *dialog = nullptr;
+    GrabberDialog *dialog = nullptr;
 
 
 };
 
-#endif // CGRABBER_H
+#endif // GRABBER_H
