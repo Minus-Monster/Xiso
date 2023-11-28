@@ -48,6 +48,7 @@ public:
     QDialog* getDialog(){ return dynamic_cast<QDialog*>(dialog);}
     bool isRunning = false;
 
+
 signals:
     void sendBuffer(unsigned short* buffer);
     void sendImage(const QImage &image);

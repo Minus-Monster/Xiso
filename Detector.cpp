@@ -3,19 +3,20 @@
 #include <QImage>
 
 Detector *instance = nullptr;
-int setFrameCount =0;
 int loopCnt = 0;
 
 // For continuous Grabbing
 void callBackLive(SpectrumLogic::ushort *pImg, int *pWidth, int *pHeight, SpectrumLogic::SLError *err, void *userArgs) {
     int* pFrameCount = (int*)userArgs;
     qDebug() << "frame count : " << *pFrameCount  << "Loopcnt" << loopCnt;
-    if(!instance->isRunning) return;
+    if(!instance->isRunning){
+        qDebug() << "Interrupted by running flag.";
+        return;
+    }
 
-    if (*err != SpectrumLogic::SLError::SL_ERROR_SUCCESS)
-    {
+    if (*err != SpectrumLogic::SLError::SL_ERROR_SUCCESS){
         qDebug() << "[ERROR]: Failed to get frame" ;
-        instance->stopGrabbing();
+//        instance->stopGrabbing();
         return;
     }
 
@@ -34,30 +35,15 @@ void callBackLive(SpectrumLogic::ushort *pImg, int *pWidth, int *pHeight, Spectr
     emit instance->sendBuffer(instance->currentBuffer);
     emit instance->sendImage(qImage);
 
-    if(loopCnt == 0 ){}
-    else if(*pFrameCount == loopCnt){
-        instance->stopGrabbing();
-        return;
-    }
+//    if(loopCnt == 0 ){}
+//    else if(*pFrameCount == loopCnt -1){
+//        qDebug() << "Sequential grabbing finished.";
+//        instance->stopGrabbing();
+//    }
     ++*pFrameCount;
 }
 
-// For capturing Grabbing
-void callBackCapture(unsigned short** ppImg, void* userArgs){
-    qDebug() << "How many times is this function called when I'm just trying to get two shots";
-    try{
-        int cWidth = instance->getWidth();
-        int cHeight = instance->getHeight();
-        int bytePerPixel = 2;
 
-        memcpy(instance->currentBuffer, ppImg[0], sizeof(unsigned short) * cWidth * cHeight);
-        // Buffer all saved?
-
-    }catch(...){
-        qDebug() << "CallBackCapture error occured while creating an image";
-    }
-
-}
 
 Detector::Detector() {
     dialog = new DetectorDialog;
@@ -96,32 +82,34 @@ void Detector::sequentialGrabbing(int numFrame) {
     setExposureMode(SpectrumLogic::ExposureModes::seq_mode);
     sl_device.SetNumberOfFrames(numFrame);
 
-    setFrameCount = 0;
     loopCnt = numFrame;
-    qDebug() << "Loopcnt is " << loopCnt;
-    currentBuffer = (unsigned short*)malloc((size_t)(getWidth()*getHeight()*2));
-    sl_device.GoLive(callBackLive, &setFrameCount);
-    sl_device.SoftwareTrigger();
     isRunning = true;
+
+    int startFrameNum = 0;
+    currentBuffer = (unsigned short*)malloc((size_t)(getWidth()*getHeight()*2));
+    sl_device.GoLive(callBackLive, &startFrameNum);
+//    sl_device.SoftwareTrigger();
 }
 
 void Detector::continuousGrabbing()
 {
-    setFrameCount = 0;
     loopCnt = 0;
     isRunning =true;
+
+    int startFrameNum = 0;
     currentBuffer = (unsigned short*)malloc((size_t)(getWidth()*getHeight()*2));
-    setExposureMode(SpectrumLogic::ExposureModes::fps30_mode);
-    sl_device.GoLive(callBackLive, &setFrameCount);
+    sl_device.GoLive(callBackLive, &startFrameNum);
 }
 
 void Detector::stopGrabbing() {
+    isRunning = false;
+    Sleep(100);
     if(!sl_device.IsConnected()){
         qDebug() << "SL Device is not connected. Nothing will be changed.";
         return;
     }
-    sl_device.GoUnLive();
-    isRunning = false;
+    qDebug() << "Stop grabbing is called. " << SpectrumLogic::SLErrorToString(sl_device.GoUnLive()).c_str();
+
     if(currentBuffer != nullptr) free(currentBuffer);
     currentBuffer = nullptr;
 }

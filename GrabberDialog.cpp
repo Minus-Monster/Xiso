@@ -165,6 +165,13 @@ GrabberDialog::GrabberDialog(QWidget *parent) :
         connect(ui->pushButton_testShot, &QPushButton::clicked, this, [this](){
             QImage img(currentTestFilePath);
             this->grabber->convertToGrabberImage((unsigned short*)img.bits());
+
+//            SisoIoImageEngine *imageHandler0 = nullptr;
+//            IoImageOpen(currentTestFilePath.toStdString().c_str(), &imageHandler0);
+//            unsigned short* buf = (unsigned short*)malloc((size_t)grabber->getDMALength());
+//            memcpy(buf, (unsigned short*)IoImageGetData(imageHandler0),grabber->getDMALength());
+//            this->grabber->convertToGrabberImage(buf);
+
             qDebug() << "Test image is sent to this grabber.";
         });
         connect(ui->pushButton_saveMcf, &QPushButton::clicked, this, [this](){

@@ -43,7 +43,6 @@ Grabber::~Grabber()
 bool Grabber::loadApplet(QString path)
 {
     currentFg = Fg_Init(path.toStdString().c_str(), 0);
-    qDebug() << currentFg;
     if(currentFg == 0){
         qDebug() << ("Failed to load an applet file." + QString(Fg_getLastErrorDescription(currentFg)));
         return false;
@@ -395,7 +394,9 @@ void Grabber::convertToGrabberImage(unsigned short *buffer)
         size_t dmaLen = getDMALength();
         memcpy(imgBuffer, buffer, dmaLen);
         auto error = SHalSetBufferStatus(vaDevice, DMAInverse, ((dmaLen / 4) << 32) | 0, FG_SELECT_BUFFER );
-        if(error != 0) qDebug() << "Set buffer status error: " << Fg_getErrorDescription(currentFg, error);
+        int frameNum = Fg_getLastPicNumberBlockingEx(currentFg, 1, 1, 10, DMAInverse);
+        qDebug() << "Convertintg : " << error << frameNum;
+        if(error != 0) qDebug() << "Set buffer status error: " << error << Fg_getErrorDescription(currentFg, error);
     }
 }
 

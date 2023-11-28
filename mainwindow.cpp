@@ -20,9 +20,6 @@ MainWindow::MainWindow(QWidget *parent)
     layout->addWidget(widget);
     ui->frame->setLayout(layout);
 
-    ui->dockWidget_debug->setVisible(true);
-    ui->dockWidget_detector->setVisible(false);
-    ui->dockWidget_panel->setVisible(false);
     bcControl = new BrightContrastControl;
     //    bcControl->show();
 
@@ -38,9 +35,9 @@ MainWindow::MainWindow(QWidget *parent)
         timer->start();
         emit grabbingStart(cnt);
 
-//                this->grabber->continuousGrabbing();
-//                QImage *img = new QImage("C:/Users/minwoo/Desktop/Minu/CalTest/Test_Raw.tiff");
-//                this->grabber->convertToGrabberImage((unsigned short*)img->bits());
+        //                this->grabber->continuousGrabbing();
+        //                QImage *img = new QImage("C:/Users/minwoo/Desktop/Minu/CalTest/Test_Raw.tiff");
+        //                this->grabber->convertToGrabberImage((unsigned short*)img->bits());
 
     });
     // Continuous grabbing
@@ -88,9 +85,8 @@ MainWindow::MainWindow(QWidget *parent)
     connect(ui->pushButton_out, &QPushButton::clicked, this, [this](){
         detector->setSaveMode(false);
         // Test Function now
-        /*
-        darkCalPath = "C:/Users/User/Desktop/Minu/Xiso/Test/Dark";
-        brightCalPath = "C:/Users/User/Desktop/Minu/Xiso/Test/Bright";
+        darkCalPath = "C:/Users/minwoo/Desktop/Minu/Xiso/Test/Dark";
+        brightCalPath = "C:/Users/minwoo/Desktop/Minu/Xiso/Test/Bright";
         if(darkCalPath == "" || brightCalPath ==  ""){
             qDebug() << "Cal path is not set";
             return;
@@ -101,48 +97,44 @@ MainWindow::MainWindow(QWidget *parent)
         int cWidth = QImage(darkCalPath + "/" + darkList.first()).width();
         int cHeight = QImage(darkCalPath + "/" + darkList.first()).height();
 
-        QImage outPixel = QImage(cWidth, cHeight, QImage::Format_Grayscale16);
-        outPixel.fill(0);
+        QVector<QImage> images;
         foreach(const QString &imagePath, darkList){
             QString currentImagePath = darkCalPath + "/" + imagePath;
-            qDebug() << currentImagePath;
-
             QImage currentImage(currentImagePath);
-            for(int y=0; y < currentImage.height(); ++y){
-                for(int x=0; x < currentImage.width(); ++x){
-                    QColor cColor= currentImage.pixelColor(x,y);
-                    qreal corr = cColor.redF()/(qreal)darkList.size();
-                    qreal outPixelVal = outPixel.pixelColor(x,y).redF();
-                    qreal out = outPixel.pixelColor(x,y).redF() + corr;
-                    QColor nColor = QColor::fromRgbF(out,out,out, 1);
-
-                    if(x==0 && y==0){
-                        qDebug() << corr << out << nColor << outPixelVal;
-                    }
-
-                    outPixel.setPixelColor(x, y, nColor);
+            images.append(currentImage);
+            qDebug() << "Appended" << currentImagePath;
+        }
+        QImage averageImage = QImage(cWidth, cHeight, QImage::Format_Grayscale16);
+        averageImage.fill(0);
+        for(int y=0; y < averageImage.height(); ++y){
+            for(int x=0; x < averageImage.width(); ++x){
+                qint64 sum = 0;
+                for(const QImage& current : images){
+                    sum += qRed(current.pixel(x,y));
                 }
+                qint64 average = sum / images.size();
+                averageImage.setPixel(x,y, qRgb(average, average, average));
             }
         }
-        outPixel.save(darkCalPath +"/result.tiff");
+        averageImage.save(darkCalPath +"/average.tiff");
 
-        QImage front(outPixel.width(), outPixel.height(), QImage::Format::Format_Grayscale8);
-        QImage back(outPixel.width(), outPixel.height(), QImage::Format::Format_Grayscale8);
-        qDebug() << front << back << outPixel;
-        for(int y=0; y < outPixel.height(); ++y){
-            for(int x=0; x <outPixel.width(); ++x){
-                QRgb pixelVal = outPixel.pixel(x,y);
+        //        QImage front(outPixel.width(), outPixel.height(), QImage::Format::Format_Grayscale8);
+        //        QImage back(outPixel.width(), outPixel.height(), QImage::Format::Format_Grayscale8);
+        //        qDebug() << front << back << outPixel;
+        //        for(int y=0; y < outPixel.height(); ++y){
+        //            for(int x=0; x <outPixel.width(); ++x){
+        //                QRgb pixelVal = outPixel.pixel(x,y);
 
-                uchar frontBits = static_cast<uchar>((pixelVal >> 8) & 0xFF);
-                front.setPixel(x,y, qRgb(frontBits, frontBits, frontBits));
+        //                uchar frontBits = static_cast<uchar>((pixelVal >> 8) & 0xFF);
+        //                front.setPixel(x,y, qRgb(frontBits, frontBits, frontBits));
 
-                uchar backBits = static_cast<uchar>(pixelVal & 0xFF);
-                back.setPixel(x,y, qRgb(backBits, backBits, backBits));
-            }
-        }
-        front.save(darkCalPath +"/FB.tiff");
-        back.save(darkCalPath +"/BB.tiff");
-        */
+        //                uchar backBits = static_cast<uchar>(pixelVal & 0xFF);
+        //                back.setPixel(x,y, qRgb(backBits, backBits, backBits));
+        //            }
+        //        }
+        //        front.save(darkCalPath +"/FB.tiff");
+        //        back.save(darkCalPath +"/BB.tiff");
+
 
         /*
         SisoIoImageEngine* imageHandle0 = NULL;
@@ -303,7 +295,6 @@ MainWindow::MainWindow(QWidget *parent)
         delete []Temp3;
         delete []Temp2;
         delete []Temp1;
-*/
         // Making a lookup table.
 
         int m_iWidth = 2800;
@@ -359,6 +350,8 @@ MainWindow::MainWindow(QWidget *parent)
         }
 
         lutfile.close();
+*/
+
         grabber->setCalibMode(true);
         QMessageBox::information(this, "Xiso", "Lookup table is done.");
 
@@ -384,6 +377,8 @@ MainWindow::MainWindow(QWidget *parent)
     connect(ui->pushButton_roiApply, &QPushButton::clicked, this, [this](){
         this->setROI();
     });
+
+
 }
 
 MainWindow::~MainWindow()
@@ -398,13 +393,13 @@ void MainWindow::setGrabber(Grabber *c)
     grabber = c;
     ui->formLayout_grabber->addRow(grabber->getDialog());
     // Default Grabber
-    grabberConnect = connect(this->grabber, &Grabber::sendImage, this, [this](QImage image){
-        auto gen = bcControl->convertImage(&image);
+    //    grabberConnect = connect(this->grabber, &Grabber::sendImage, this, [this](QImage image){
+    //        auto gen = bcControl->convertImage(&image);
 
-        this->widget->setImage(gen);
-        //        qDebug() << "try to save images" << image.save("C:/Users/User/Desktop/tmpMinu/test.tiff");
-        ui->statusbar->showMessage("Elapsed time : " + QString::number(timer->restart()));
-    });
+    //        this->widget->setImage(gen);
+    //        //        qDebug() << "try to save images" << image.save("C:/Users/User/Desktop/tmpMinu/test.tiff");
+    //        ui->statusbar->showMessage("Elapsed time : " + QString::number(timer->restart()));
+    //    });
 
 }
 /// DETECTOR PART BEGINS ///
@@ -413,6 +408,12 @@ void MainWindow::setDetector(Detector *d)
     detector = d;
     ui->formLayout_detector->addRow(detector->getDialog());
     connect(d, &Detector::sendBuffer, this->grabber, &Grabber::convertToGrabberImage);
+
+    disconnect(grabberConnect);
+    detectorConnect = connect(this->detector, &Detector::sendImage, this, [this](QImage image){
+        this->widget->setImage(image);
+        ui->statusbar->showMessage("Elapsed time : " + QString::number(timer->restart()));
+    });
 }
 
 void MainWindow::setMessage(QString message)
