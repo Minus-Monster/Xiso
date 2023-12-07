@@ -3,7 +3,6 @@
 
 #include "DetectorDialog.h"
 #include "SLDevice.h"
-#include "SLImage.h"
 #include <iostream>
 #include <QObject>
 #include <QDebug>
@@ -40,6 +39,7 @@ public:
     bool setFullWell(SpectrumLogic::FullWellModes mode);
     SpectrumLogic::FullWellModes getFullWellMode();
 
+    void saveImages(int cnt);
     void setSaveMode(bool on){ saveMode = on; }
     void setSavingPath(QString path){ savePath = path; }
     QString getSavingPath(){ return savePath; }

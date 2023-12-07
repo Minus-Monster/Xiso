@@ -31,7 +31,7 @@ public:
 #ifdef PCL_ENABLED
                     this->scene->VTKWidget->setScale(1.2);
 #endif
-                }else this->view->setScale(1.2);
+                }else this->view->setScale((float)1.2);
             });
             buttonLayout->addWidget(buttonZoomIn);
 
@@ -42,7 +42,7 @@ public:
 #ifdef PCL_ENABLED
                     this->scene->VTKWidget->setScale(0.8);
 #endif
-                }else this->view->setScale(0.8);
+                }else this->view->setScale((float)0.8);
             });
             buttonLayout->addWidget(buttonZoomOut);
 

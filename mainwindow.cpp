@@ -7,6 +7,8 @@
 #include <QTextBlock>
 #include <QTextCursor>
 #include <QMetaObject>
+#include "sisoIo.h"
+#include <QColorSpace>
 
 MainWindow::MainWindow(QWidget *parent)
     : QMainWindow(parent)
@@ -54,16 +56,16 @@ MainWindow::MainWindow(QWidget *parent)
     // Dark calib
     connect(ui->pushButton_dark, &QPushButton::clicked, this, [this](){
         QString path = QFileDialog::getExistingDirectory(this, "Select a directory to save", QDir::homePath());
-        if(path == "") return;
+        if(path.isEmpty()) return;
         darkCalPath = path;
-        grabber->setCalibMode(false);
         // Grabbing x images
         detector->setSaveMode(true);
         detector->setSavingPath(path + "/DarkRaw");
         detector->sequentialGrabbing(ui->spinBox_calibCount->value());
+
+        //        detector->saveImages(ui->spinBox_calibCount->value());
         // need to capture X frames and save that frames in the specific folder.
 
-        grabber->setCalibMode(true);
         //        detector->setSaveMode(false); // need to revise this code. threading error.
     });
     // bright calib
@@ -72,287 +74,49 @@ MainWindow::MainWindow(QWidget *parent)
         if(path == "") return;
         brightCalPath = path;
 
-        grabber->setCalibMode(false);
         // Grabbing x images
         detector->setSaveMode(true);
         detector->setSavingPath(path + "/WhiteRaw");
         detector->sequentialGrabbing(ui->spinBox_calibCount->value());
 
-        grabber->setCalibMode(true);
-        //        detector->setSaveMode(false);
     });
     // calib out
     connect(ui->pushButton_out, &QPushButton::clicked, this, [this](){
-        detector->setSaveMode(false);
-        // Test Function now
-        darkCalPath = "C:/Users/minwoo/Desktop/Minu/Xiso/Test/Dark";
-        brightCalPath = "C:/Users/minwoo/Desktop/Minu/Xiso/Test/Bright";
+        darkCalPath = "C:/Users/MPark/Documents/Projects/Xiso/Dark";
+        brightCalPath = "C:/Users/MPark/Documents/Projects/Xiso/Bright";
+
         if(darkCalPath == "" || brightCalPath ==  ""){
             qDebug() << "Cal path is not set";
             return;
         }
         auto darkList = QDir(darkCalPath).entryList(QStringList() << "*.tif" << "*.tiff", QDir::Files);
+        foreach(auto current, darkList){
+            if(!current.contains("DarkRaw")){
+                darkList.removeOne(current);
+            }
+        }
         auto brightList = QDir(brightCalPath).entryList(QStringList() << "*.tif" << "*.tiff", QDir::Files);
-
-        int cWidth = QImage(darkCalPath + "/" + darkList.first()).width();
-        int cHeight = QImage(darkCalPath + "/" + darkList.first()).height();
-
-        QVector<QImage> images;
-        foreach(const QString &imagePath, darkList){
-            QString currentImagePath = darkCalPath + "/" + imagePath;
-            QImage currentImage(currentImagePath);
-            images.append(currentImage);
-            qDebug() << "Appended" << currentImagePath;
-        }
-        QImage averageImage = QImage(cWidth, cHeight, QImage::Format_Grayscale16);
-        averageImage.fill(0);
-        for(int y=0; y < averageImage.height(); ++y){
-            for(int x=0; x < averageImage.width(); ++x){
-                qint64 sum = 0;
-                for(const QImage& current : images){
-                    sum += qRed(current.pixel(x,y));
-                }
-                qint64 average = sum / images.size();
-                averageImage.setPixel(x,y, qRgb(average, average, average));
-            }
-        }
-        averageImage.save(darkCalPath +"/average.tiff");
-
-        //        QImage front(outPixel.width(), outPixel.height(), QImage::Format::Format_Grayscale8);
-        //        QImage back(outPixel.width(), outPixel.height(), QImage::Format::Format_Grayscale8);
-        //        qDebug() << front << back << outPixel;
-        //        for(int y=0; y < outPixel.height(); ++y){
-        //            for(int x=0; x <outPixel.width(); ++x){
-        //                QRgb pixelVal = outPixel.pixel(x,y);
-
-        //                uchar frontBits = static_cast<uchar>((pixelVal >> 8) & 0xFF);
-        //                front.setPixel(x,y, qRgb(frontBits, frontBits, frontBits));
-
-        //                uchar backBits = static_cast<uchar>(pixelVal & 0xFF);
-        //                back.setPixel(x,y, qRgb(backBits, backBits, backBits));
-        //            }
-        //        }
-        //        front.save(darkCalPath +"/FB.tiff");
-        //        back.save(darkCalPath +"/BB.tiff");
-
-
-        /*
-        SisoIoImageEngine* imageHandle0 = NULL;
-        int m_iWidth = this->ui->spinBox_width->value(); // Need to edit
-        int m_iHeight = this->ui->spinBox_height->value(); // Need to edit
-        int nByte = 2;
-        int nAvgCount = ui->spinBox_calibCount->value();
-
-        darkCalPath = "C:/Users/User/Desktop/Minu/Xiso/Cal";
-        brightCalPath = "C:/Users/User/Desktop/Minu/Xiso/Cal";
-        cal_Data0 = new unsigned char[(long long)m_iWidth*m_iHeight];
-        cal_Data1 = new unsigned char[(long long)m_iWidth*m_iHeight];
-        cal_Data2 = new unsigned char[(long long)m_iWidth*m_iHeight];
-        cal_Data3 = new unsigned char[(long long)m_iWidth*m_iHeight];
-        unsigned short* Temp;// = new unsigned short[m_iWidth * m_iHeight * nByte];
-        //        memset(Temp, 0, m_iWidth * m_iHeight * nByte);
-        unsigned short* Temp1 = new unsigned short[m_iWidth * m_iHeight * nByte];
-        memset(Temp1, 0, m_iWidth * m_iHeight * nByte);
-        unsigned short* Temp2 = new unsigned short[m_iWidth * m_iHeight * nByte];
-        memset(Temp2, 0, m_iWidth * m_iHeight * nByte);
-        unsigned short* Temp3 = new unsigned short[m_iWidth * m_iHeight * nByte];
-        memset(Temp3, 0, m_iWidth * m_iHeight * nByte);
-        unsigned short* Temp4 = new unsigned short[m_iWidth * m_iHeight * nByte];
-        memset(Temp4, 0, m_iWidth * m_iHeight * nByte);
-        unsigned short* Temp5 = new unsigned short[m_iWidth * m_iHeight * nByte];
-        memset(Temp5, 0, m_iWidth * m_iHeight * nByte);
-        unsigned short* Temp6 = new unsigned short[m_iWidth * m_iHeight * nByte];
-        memset(Temp6, 0, m_iWidth * m_iHeight * nByte);
-        unsigned short* Temp7 = new unsigned short[m_iWidth * m_iHeight * nByte];
-        memset(Temp7, 0, m_iWidth * m_iHeight * nByte);
-        unsigned short* Temp8 = new unsigned short[m_iWidth * m_iHeight * nByte];
-        memset(Temp8, 0, m_iWidth * m_iHeight * nByte);
-        unsigned short* AveImg = new unsigned short[m_iWidth * m_iHeight * nByte];
-        memset(AveImg, 0, m_iWidth * m_iHeight * nByte);
-
-        qDebug() << nAvgCount;
-        for (int n = 0; n < nAvgCount; n++){
-            // convert the path
-            QString originalPath = (darkCalPath + "/DarkRaw" + QString::number(n) + ".tiff");
-            auto error = IoImageOpen(originalPath.toStdString().c_str(), &imageHandle0);
-            if(error == 0){
-                qDebug() << "Error";
-                Temp = (unsigned short*)IoImageGetData(imageHandle0);
-
-                for (int i = 0; i < m_iHeight; i++){
-                    for (int j = 0; j < m_iWidth; j++){
-                        if(n < 2){
-                            Temp1[i * m_iWidth + j] += (Temp[i * m_iWidth + j]);
-                        }else if(n>=2 && n < 4){
-                            Temp2[i * m_iWidth + j] += (Temp[i * m_iWidth + j]);
-                        }else if(n>=4 && n < 6){
-                            Temp3[i * m_iWidth + j] += (Temp[i * m_iWidth + j]);
-                        }else if(n>=6 && n < 8){
-                            Temp4[i * m_iWidth + j] += (Temp[i * m_iWidth + j]);
-                        }else if(n>=8 && n < 10){
-                            Temp5[i * m_iWidth + j] += (Temp[i * m_iWidth + j]);
-                        }else if(n>=10 && n < 12){
-                            Temp6[i * m_iWidth + j] += (Temp[i * m_iWidth + j]);
-                        }else if(n>= 12 && n < 14){
-                            Temp7[i * m_iWidth + j] += (Temp[i * m_iWidth + j]);
-                        }else if(n>= 14 && n < 16){
-                            Temp8[i * m_iWidth + j] += (Temp[i * m_iWidth + j]);
-                        }else{
-                            qDebug() << "Out of index";
-                        }
-                    }
-                }
-            }else{
-                qDebug() << Fg_getErrorDescription(nullptr, error);
-            }
-        }
-        IoFreeImage(imageHandle0);
-        imageHandle0 = NULL;
-
-        for (int i = 0; i < m_iHeight; i++){
-            for (int j = 0; j < m_iWidth; j++){
-                AveImg[i * m_iWidth + j] = ((Temp1[i * m_iWidth + j]) + (Temp2[i * m_iWidth + j]) + (Temp3[i * m_iWidth + j])+(Temp4[i * m_iWidth + j])+ (Temp5[i * m_iWidth + j])+ (Temp6[i * m_iWidth + j])+ (Temp7[i * m_iWidth + j])+ (Temp8[i * m_iWidth + j])) / nAvgCount;
+        foreach(auto current, brightList){
+            if(!current.contains("WhiteRaw")){
+                brightList.removeOne(current);
             }
         }
 
-        IoWriteTiff( (darkCalPath + "/DcalAvg.tiff").toStdString().c_str(), (unsigned char*)AveImg, m_iWidth, m_iHeight, 16, 1);
-        for (int i = 0; i < m_iHeight; i++){
-            for (int j = 0; j < m_iWidth; j++){
-                // Low 8bit
-                cal_Data0[i * m_iWidth + j] = AveImg[i * m_iWidth + j] / 1;   //BIT SHIFT 2^8=256 ->  (Bit7 ~ Bit0)
-                // High 8bit
-                cal_Data1[i * m_iWidth + j] = AveImg[i * m_iWidth + j] / 256;   //BIT SHIFT 2^8=256 ->  (Bit15 ~ Bit8)
-            }
+
+        QString darkFileName = darkCalPath+"/DcalAvg";
+        if(!this->averagedImage(darkFileName, darkCalPath, darkList)){
+            qDebug() << "Dark calibration isn't generated.";
+            return;
         }
-        IoWriteTiff((darkCalPath + "/D1.tiff").toStdString().c_str(), cal_Data0, m_iWidth, m_iHeight, 8, 1);
-        IoWriteTiff((darkCalPath + "/D2.tiff").toStdString().c_str(), cal_Data1, m_iWidth, m_iHeight, 8, 1);
-
-        // WhiteCal
-
-        int error = 0;
-
-        for (int n = 0; n < nAvgCount; n++){
-            error = IoImageOpen((brightCalPath + "/WhiteRaw" + QString::number(n) + ".tiff").toStdString().c_str(), &imageHandle0);
-            if (error == 0){
-                Temp = (unsigned short*)IoImageGetData(imageHandle0);
-
-                for (int i = 0; i < m_iHeight; i++){
-                    for (int j = 0; j < m_iWidth; j++){
-                        if(n < 2){
-                            Temp1[i * m_iWidth + j] += (Temp[i * m_iWidth + j]);
-                        }else if(n>=2 && n < 4){
-                            Temp2[i * m_iWidth + j] += (Temp[i * m_iWidth + j]);
-                        }else if(n>=4 && n < 6){
-                            Temp3[i * m_iWidth + j] += (Temp[i * m_iWidth + j]);
-                        }else if(n>=6 && n < 8){
-                            Temp4[i * m_iWidth + j] += (Temp[i * m_iWidth + j]);
-                        }else if(n>=8 && n < 10){
-                            Temp5[i * m_iWidth + j] += (Temp[i * m_iWidth + j]);
-                        }else if(n>=10 && n < 12){
-                            Temp6[i * m_iWidth + j] += (Temp[i * m_iWidth + j]);
-                        }else if(n>= 12 && n < 14){
-                            Temp7[i * m_iWidth + j] += (Temp[i * m_iWidth + j]);
-                        }else if(n>= 14 && n < 16){
-                            Temp8[i * m_iWidth + j] += (Temp[i * m_iWidth + j]);
-                        }else{
-                            qDebug() << "Out of index";
-                        }
-                    }
-                }
-            }
+        QString brightFileName = brightCalPath+"/WcalAvg.tiff";
+        if(!this->averagedImage(brightFileName, brightCalPath, brightList)){
+            qDebug() << "Bright calibration isn't generated.";
+            return;
         }
-        IoFreeImage(imageHandle0);
-        imageHandle0 = NULL;
-
-        for (int i = 0; i < m_iHeight; i++){
-            for (int j = 0; j < m_iWidth; j++){
-                AveImg[i * m_iWidth + j] = ((Temp1[i * m_iWidth + j]) + (Temp2[i * m_iWidth + j]) + (Temp3[i * m_iWidth + j])+(Temp4[i * m_iWidth + j])+ (Temp5[i * m_iWidth + j])+ (Temp6[i * m_iWidth + j])+ (Temp7[i * m_iWidth + j])+ (Temp8[i * m_iWidth + j])) / nAvgCount;
-            }
+        if(!this->generateLUT(darkFileName, brightFileName, darkCalPath+"/2800lut.txt")){
+            qDebug() << "LUT Generating has faced an error.";
+            return;
         }
-        IoWriteTiff((brightCalPath + "/WcalAvg.tiff").toStdString().c_str(), (unsigned char*)AveImg, m_iWidth, m_iHeight, 16, 1);
-        //        IoWriteTiff("C:/Users/User/Desktop/Minu/Xiso/Test/Wcal/DcalAvg.tiff", (unsigned char*)AveImg, m_iWidth, m_iHeight, 16, 1);
-
-        for (int i = 0; i < m_iHeight; i++){
-            for (int j = 0; j < m_iWidth; j++){
-                // Low 8bit
-                cal_Data2[i * m_iWidth + j] = AveImg[i * m_iWidth + j] / 1;   //BIT SHIFT 2^8=256 ->  (Bit7 ~ Bit0)
-                // High 8bit
-                cal_Data3[i * m_iWidth + j] = AveImg[i * m_iWidth + j] / 256;   //BIT SHIFT 2^8=256 ->  (Bit15 ~ Bit8)
-            }
-        }
-        IoWriteTiff((brightCalPath + "/B1.tiff").toStdString().c_str(), cal_Data2, m_iWidth, m_iHeight, 8, 1);
-        IoWriteTiff((brightCalPath + "/B2.tiff").toStdString().c_str(), cal_Data3, m_iWidth, m_iHeight, 8, 1);
-
-        IoFreeImage(imageHandle0);
-        imageHandle0 = NULL;
-
-        delete []AveImg;
-        delete []Temp8;
-        delete []Temp7;
-        delete []Temp6;
-        delete []Temp5;
-        delete []Temp4;
-        delete []Temp3;
-        delete []Temp2;
-        delete []Temp1;
-        // Making a lookup table.
-
-        int m_iWidth = 2800;
-        int m_iHeight = 600;
-
-        SisoIoImageEngine* imageHandle0 = nullptr;
-        const unsigned char* B1 = nullptr;
-        auto error = IoImageOpen("C:/Users/minwoo/Desktop/Minu/CalTest/B1.tiff", &imageHandle0);
-        B1 = (const unsigned char*)IoImageGetData(imageHandle0);
-
-        const unsigned char* B2 = nullptr;
-        error = IoImageOpen("C:/Users/minwoo/Desktop/Minu/CalTest/B2.tiff", &imageHandle0);
-        B2 = (const unsigned char*)IoImageGetData(imageHandle0);
-
-        const unsigned char* D1 = nullptr;
-        error = IoImageOpen("C:/Users/minwoo/Desktop/Minu/CalTest/D1.tiff", &imageHandle0);
-        D1 = (const unsigned char*)IoImageGetData(imageHandle0);
-
-        const unsigned char* D2 = nullptr;
-        error = IoImageOpen("C:/Users/minwoo/Desktop/Minu/CalTest/D2.tiff", &imageHandle0);
-        D2 = (const unsigned char*)IoImageGetData(imageHandle0);
-        // C:/Users/minwoo/Desktop/Minu/CalTest/B1.tiff
-        // C:/Users/minwoo/Desktop/Minu/CalTest/B2.tiff
-        // C:/Users/minwoo/Desktop/Minu/CalTest/D1.tiff
-        // C:/Users/minwoo/Desktop/Minu/CalTest/D1.tiff
-
-        std::ofstream lutfile;
-        lutfile.open("C:/Users/minwoo/Desktop/Minu/CalTest/2800TT.txt");
-        int cnt = 0;
-        for (int h = 0; h < m_iHeight; h++) {
-            for (int w = 0; w < m_iWidth; w++) {
-                unsigned int d1_p = (unsigned int) D1[cnt];
-                unsigned int d2_p = (unsigned int) D2[cnt];
-                unsigned int b1_p = (unsigned int) B1[cnt];
-                unsigned int b2_p = (unsigned int) B2[cnt];
-
-                unsigned int pixel = d1_p + (d2_p << 8) + (b1_p << 16) + (b2_p << 24);
-                lutfile << pixel << "\n";
-
-                cnt += 1;
-            }
-
-            //after each line dummy pixels must be added
-            //width/12 = ?    2800 / 12 = 233.333 -> 234? ??, 234 * 12= 2808 , 8 pixel ?? ??
-            //width/12 = ?    2804 / 12 = 233.333 -> 234? ??, 234 * 12= 2808 , 8 pixel ?? ??
-            if (m_iWidth % 12 != 0){
-                for (int dummy = 0; dummy < 4; dummy++)
-                    lutfile << 0 << "\n";
-            }else{
-                for (int dummy = 0; dummy < 4; dummy++)
-                    lutfile << 0 << "\n";
-            }
-        }
-
-        lutfile.close();
-*/
-
-        grabber->setCalibMode(true);
         QMessageBox::information(this, "Xiso", "Lookup table is done.");
 
     });
@@ -437,5 +201,114 @@ void MainWindow::setROI()
     this->detector->setY(y);
     this->detector->setWidth(width);
     this->detector->setHeight(height);
+}
+
+bool MainWindow::averagedImage(QString avgFileName, QString dirPath, QStringList fileNameList)
+{
+    if(fileNameList.isEmpty()){
+        qDebug() << dirPath << "the file list is empty. nothing can do.";
+        return false;
+    }
+    QVector<unsigned short*> bufs;
+    SisoIoImageEngine* imageHandler = nullptr;
+    foreach(const QString &currentFile, fileNameList){
+        QString currentImagePath = dirPath + "/" + currentFile;
+        qDebug() << "Appended" << currentImagePath;
+
+        if(IoImageOpen(currentImagePath.toStdString().c_str(), &imageHandler) != 0){
+            qDebug() << "Failed to open a file via IoImageOpen. this sequence will be closed.";
+            return false;
+        }
+        bufs.push_back((unsigned short*)IoImageGetData(imageHandler));
+    }
+    QImage tmp = QImage(dirPath + "/" + fileNameList.first());
+    if(tmp.isNull()){
+        qDebug() << "File is empty." << avgFileName << "Would be not made.";
+        return false;
+    }
+    int bytePerPixel = 2; // 16 bit -> 2 , 8 bit -> 1
+
+    unsigned short* averageBuf = (unsigned short*)malloc(tmp.width()*tmp.height()*bytePerPixel);
+    unsigned char* upperbits = (unsigned char*)malloc(tmp.width()*tmp.height());
+    unsigned char* lowerbits = (unsigned char*)malloc(tmp.width()*tmp.height());
+    for(int y=0; y < tmp.height(); ++y){
+        for(int x=0; x < tmp.width(); ++x){
+            unsigned long sumVal = 0;
+            unsigned int currentLineNum = y * tmp.width() + x;
+            for(unsigned short* buf : bufs){
+                sumVal += buf[currentLineNum];
+            }
+            sumVal /= bufs.size();
+            averageBuf[currentLineNum] = sumVal;
+            upperbits[currentLineNum] = sumVal / 256;
+            lowerbits[currentLineNum] = sumVal / 1;
+        }
+    }
+    int error = IoWriteTiff((avgFileName + ".tiff").toStdString().c_str(), (unsigned char*)averageBuf, tmp.width(), tmp.height(), 16, 1);
+    int errorUp = IoWriteTiff((avgFileName + "_upper.tiff").toStdString().c_str(), (unsigned char*)upperbits, tmp.width(), tmp.height(), 8, 1);
+    int errorLow = IoWriteTiff((avgFileName.toStdString() + "_lower.tiff").c_str(), (unsigned char*)lowerbits, tmp.width(), tmp.height(), 8, 1);
+
+    // Deallocating
+    IoFreeImage(imageHandler);
+    free(averageBuf);
+
+    if(error || errorUp || errorLow){
+        qDebug() << "TIFF Writing error: average-" << Fg_getErrorDescription(this->grabber->getFg(), error) << "Upper-" << Fg_getErrorDescription(this->grabber->getFg(), errorUp) << "Lower-" << Fg_getErrorDescription(this->grabber->getFg(), errorLow);
+        return false;
+    }
+
+    return true;
+}
+
+bool MainWindow::generateLUT(QString darkAvgFileName, QString brightAvgFileName, QString savePath)
+{
+    SisoIoImageEngine* imageHandler = nullptr;
+    unsigned char *B1, *B2, *D1, *D2;
+    int errorB1, errorB2, errorD1, errorD2;
+
+    errorD1 = IoImageOpen((darkAvgFileName + "_lower.tiff").toStdString().c_str(), &imageHandler);
+    D1 = (unsigned char*)IoImageGetData(imageHandler);
+    errorD2 = IoImageOpen((darkAvgFileName + "_upper.tiff").toStdString().c_str(), &imageHandler);
+    D2 = (unsigned char*)IoImageGetData(imageHandler);
+    errorB1 = IoImageOpen((brightAvgFileName + "_lower.tiff").toStdString().c_str(), &imageHandler);
+    B1 = (unsigned char*)IoImageGetData(imageHandler);
+    errorB2 = IoImageOpen((brightAvgFileName + "_upper.tiff").toStdString().c_str(), &imageHandler);
+    B2 = (unsigned char*)IoImageGetData(imageHandler);
+
+    if(errorD1 || errorD2 || errorB1 || errorB2){
+        qDebug() << "Cannot open some files from the path. failed to create LUT.";
+        return false;
+    }
+
+    std::ofstream lutfile;
+    lutfile.open(savePath.toStdString().c_str());
+    QImage tmp = QImage(darkAvgFileName + "_upper.tiff");
+
+    int cnt = 0;
+    for (int h = 0; h < tmp.height(); h++) {
+        for (int w = 0; w < tmp.width(); w++) {
+            unsigned int d1_p = (unsigned int) D1[cnt];
+            unsigned int d2_p = (unsigned int) D2[cnt];
+            unsigned int b1_p = (unsigned int) B1[cnt];
+            unsigned int b2_p = (unsigned int) B2[cnt];
+
+            unsigned int pixel = d1_p + (d2_p << 8) + (b1_p << 16) + (b2_p << 24);
+            lutfile << pixel << "\n";
+            cnt += 1;
+        }
+
+        //after each line dummy pixels must be added
+        //width/12 = ?    2800 / 12 = 233.333 -> 234? ??, 234 * 12= 2808 , 8 pixel ?? ??
+        //width/12 = ?    2804 / 12 = 233.333 -> 234? ??, 234 * 12= 2808 , 8 pixel ?? ??
+        if (tmp.width() % 12 != 0){
+            for (int dummy = 0; dummy < 4; dummy++)
+                lutfile << 0 << "\n";
+        }else{
+            for (int dummy = 0; dummy < 4; dummy++)
+                lutfile << 0 << "\n";
+        }
+    }
+    lutfile.close();
+    return true;
 }
 

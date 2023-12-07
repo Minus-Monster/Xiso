@@ -3,44 +3,66 @@
 #include <QImage>
 
 Detector *instance = nullptr;
+
+int startFrameNum =0;
 int loopCnt = 0;
+
+void callBackCapture(ushort** ppImg, void* userArgs){
+    try
+    {
+        int iWidth = instance->getWidth();
+        int iHeight = instance->getHeight();
+        int iDepth = *(int*)userArgs;
+
+        qDebug() << "[INFO]: Received " << iDepth << " frames with dimensions " << iWidth << "x" << iHeight;
+
+        for (int i = 0; i < iDepth; ++i){
+            memcpy(instance->currentBuffer, ppImg[i], sizeof(SpectrumLogic::ushort) * iWidth * iHeight);
+            QImage qImage((uchar*)instance->currentBuffer, iWidth, iHeight, QImage::Format_Grayscale16);
+            qImage.save(instance->getSavingPath() + std::to_string(i).c_str() + ".tiff");
+        }
+
+    }
+    catch (...)
+    {
+        qDebug()<< "[ERROR]: Exception in SaveStack_callback.";
+    }
+}
 
 // For continuous Grabbing
 void callBackLive(SpectrumLogic::ushort *pImg, int *pWidth, int *pHeight, SpectrumLogic::SLError *err, void *userArgs) {
-    int* pFrameCount = (int*)userArgs;
-    qDebug() << "frame count : " << *pFrameCount  << "Loopcnt" << loopCnt;
     if(!instance->isRunning){
         qDebug() << "Interrupted by running flag.";
         return;
     }
-
     if (*err != SpectrumLogic::SLError::SL_ERROR_SUCCESS){
         qDebug() << "[ERROR]: Failed to get frame" ;
-//        instance->stopGrabbing();
+        instance->stopGrabbing();
         return;
     }
 
-    memcpy(instance->currentBuffer, pImg, sizeof(SpectrumLogic::ushort) * *pWidth * *pHeight);
+    int* pFrameCount = (int*)userArgs;
+    qDebug() << "Frame count : " << *pFrameCount;
 
-    SpectrumLogic::SLImage image;
-    image.Build(*pWidth, *pHeight, 1);
-    if(instance->isSaveMode()){
-        qDebug() << "entranced to saving mode frame cnt " << *pFrameCount;
-        memcpy(image.GetDataPointer(0), pImg, sizeof(SpectrumLogic::ushort) * *pWidth * *pHeight);
-        if (!image.WriteTiffImage(instance->getSavingPath().toStdString() + std::to_string(*pFrameCount) + ".tiff", image, 16)){
-            qDebug() << "[ERROR]: Failed to save frame #" << *pFrameCount + 1;
-        }
-    }
-    QImage qImage((uchar*)instance->currentBuffer, *pWidth, *pHeight, QImage::Format_Grayscale16);
+    memcpy(instance->currentBuffer, pImg, sizeof(SpectrumLogic::ushort) * *pWidth * *pHeight);
     emit instance->sendBuffer(instance->currentBuffer);
+
+    QImage qImage((uchar*)instance->currentBuffer, *pWidth, *pHeight, QImage::Format_Grayscale16);
     emit instance->sendImage(qImage);
 
-//    if(loopCnt == 0 ){}
-//    else if(*pFrameCount == loopCnt -1){
-//        qDebug() << "Sequential grabbing finished.";
-//        instance->stopGrabbing();
-//    }
+
+    if(instance->isSaveMode()){
+        qDebug() << "entranced to saving mode frame cnt " << *pFrameCount;
+        qImage.save(instance->getSavingPath() + std::to_string(*pFrameCount).c_str() + ".tiff");
+    }
+
     ++*pFrameCount;
+    if(loopCnt == 0 ){}
+    else if(*pFrameCount == loopCnt){
+        qDebug() << "Sequential grabbing finished.";
+        instance->stopGrabbing();
+        return;
+    }
 }
 
 
@@ -74,7 +96,6 @@ bool Detector::initialize(){
 
 
 void Detector::sequentialGrabbing(int numFrame) {
-    qDebug() << "Sequential Grabbing started with frame " << numFrame;
     if(!sl_device.IsConnected()){
         qDebug() << "SL Device is not connected. Nothing will be changed.";
         return;
@@ -85,10 +106,10 @@ void Detector::sequentialGrabbing(int numFrame) {
     loopCnt = numFrame;
     isRunning = true;
 
-    int startFrameNum = 0;
+    startFrameNum = 0;
     currentBuffer = (unsigned short*)malloc((size_t)(getWidth()*getHeight()*2));
-    sl_device.GoLive(callBackLive, &startFrameNum);
-//    sl_device.SoftwareTrigger();
+    qDebug() << "Try to start sequentialGrabbing : " << SpectrumLogic::SLErrorToString(sl_device.GoLive(callBackLive, &startFrameNum)).c_str();
+    qDebug() << "Software Trigger : " << SpectrumLogic::SLErrorToString(sl_device.SoftwareTrigger()).c_str();
 }
 
 void Detector::continuousGrabbing()
@@ -96,23 +117,42 @@ void Detector::continuousGrabbing()
     loopCnt = 0;
     isRunning =true;
 
-    int startFrameNum = 0;
+    startFrameNum = 0;
     currentBuffer = (unsigned short*)malloc((size_t)(getWidth()*getHeight()*2));
-    sl_device.GoLive(callBackLive, &startFrameNum);
+    qDebug() << "Try to start continuousGrabbing : " << SpectrumLogic::SLErrorToString(sl_device.GoLive(callBackLive, &startFrameNum)).c_str();
+
 }
 
 void Detector::stopGrabbing() {
     isRunning = false;
-    Sleep(100);
     if(!sl_device.IsConnected()){
         qDebug() << "SL Device is not connected. Nothing will be changed.";
         return;
     }
-    qDebug() << "Stop grabbing is called. " << SpectrumLogic::SLErrorToString(sl_device.GoUnLive()).c_str();
+    auto out = sl_device.GoUnLive();
+    qDebug() << "Stop grabbing is called. " << SpectrumLogic::SLErrorToString(out).c_str();
+    if(out != SpectrumLogic::SLError::SL_ERROR_SUCCESS){
+        Sleep(1000);
+        qDebug() << "We're going to try to stop it once again." << SpectrumLogic::SLErrorToString(sl_device.GoUnLive(true)).c_str();
+    }
 
     if(currentBuffer != nullptr) free(currentBuffer);
     currentBuffer = nullptr;
 }
+
+void Detector::saveImages(int cnt){
+    qDebug() << "Starting to save frames.";
+    int numFrames = cnt;
+    int expTime = getExposureTime();
+
+    qDebug()  << "[INFO]: Exposure time: " << expTime << " ms"  << "[INFO]: Frames: " << numFrames ;
+
+    if (sl_device.CaptureImgCallback(expTime, numFrames, callBackCapture) != SpectrumLogic::SLError::SL_ERROR_SUCCESS)
+        qDebug() << "[ERROR]: CaptureImgCallback failed." ;
+    else
+        qDebug() << "[INFO]: CaptureImgCallback succeeded." ;
+}
+
 
 bool Detector::setROI(int _w, int _h, int _x, int _y)
 {

@@ -50,8 +50,7 @@ else: unix:!android: target.path = /opt/$${TARGET}/bin
 #C:\SLDevice\SDK\lib\PleoraLibs\x64
 INCLUDEPATH += "C:/SLDevice/SDK/headers" "C:/SLDevice/SDK/headers/GIGEheaders" "C:/SLDevice/SDK/headers/Pleoraheaders"
 LIBS += -L"C:/SLDevice/SDK/lib/x64/Release" -L"C:\SLDevice\SDK\lib\x64\Debug" -L"C:/SLDevice/SDK/lib/PleoraLibs/x64"
-LIBS += -lSLDeviceLib -lSLDeviceLib_d -lSLImage -llibtiff -llegacy_stdio_definitions -lPvDevice64 -llibpng -lSLDefectCorrection -lSLGIGEInterface -SLHelperLibrary
-
+LIBS += -lSLDeviceLib -lSLDeviceLib_d -lSLImage -llibtiff -llegacy_stdio_definitions -lPvDevice64 -llibpng -lSLDefectCorrection -lSLGIGEInterface
 INCLUDEPATH += "$$(BASLER_FG_SDK_DIR)/include"
 DEFINES += GRABBER_ENABLED
 

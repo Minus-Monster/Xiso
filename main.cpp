@@ -7,9 +7,9 @@
 #include <QTime>
 
 MainWindow* window = nullptr;
-void setDebugMessage(QtMsgType type, const QMessageLogContext &conText, const QString &msg)
+void setDebugMessage(QtMsgType, const QMessageLogContext &, const QString &msg)
 {
-    window->setMessage("[" + QTime::currentTime().toString() + "] " + msg);
+    window->setMessage("[" + QTime::currentTime().toString() + "] " + msg );
 }
 
 int main(int argc, char *argv[])

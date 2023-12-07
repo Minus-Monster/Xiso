@@ -13,7 +13,7 @@
 QT_BEGIN_NAMESPACE
 namespace Ui { class MainWindow; }
 QT_END_NAMESPACE
-void setDebugMessage(QtMsgType type, const QMessageLogContext &conText, const QString &msg);
+void setDebugMessage(QtMsgType, const QMessageLogContext &, const QString &msg);
 class MainWindow;
 class MainWindow : public QMainWindow
 {
@@ -29,6 +29,8 @@ public:
     void setMessage(QString message);
     void setROI();
     void histogramEqualization(QImage &image);
+    bool averagedImage(QString avgFileName, QString dirPath, QStringList fileNameList);
+    bool generateLUT(QString darkAvgFileName, QString brightAvgFileName, QString savePath);
 
 signals:
     void grabbingStart(int numFrame=0);
