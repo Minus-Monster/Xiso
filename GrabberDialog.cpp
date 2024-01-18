@@ -3,6 +3,8 @@
 #include "Grabber.h"
 #include <QFileDialog>
 #include <QMessageBox>
+#include <QFile>
+#include <QTextStream>
 
 GrabberDialog::GrabberDialog(QWidget *parent) :
     QDialog(parent),
@@ -20,6 +22,7 @@ GrabberDialog::GrabberDialog(QWidget *parent) :
         auto config = QFileDialog::getOpenFileName(this, "Basler Framegrabber Settings", QDir::currentPath(), "*.mcf");
         if(config.isEmpty()) return;
         else ui->lineEdit_config->setText(config);
+        widgetGenerator(config);
     });
 
     connect(ui->pushButton_initialization, &QPushButton::clicked, this, [this](){
@@ -166,11 +169,11 @@ GrabberDialog::GrabberDialog(QWidget *parent) :
             QImage img(currentTestFilePath);
             this->grabber->convertToGrabberImage((unsigned short*)img.bits());
 
-//            SisoIoImageEngine *imageHandler0 = nullptr;
-//            IoImageOpen(currentTestFilePath.toStdString().c_str(), &imageHandler0);
-//            unsigned short* buf = (unsigned short*)malloc((size_t)grabber->getDMALength());
-//            memcpy(buf, (unsigned short*)IoImageGetData(imageHandler0),grabber->getDMALength());
-//            this->grabber->convertToGrabberImage(buf);
+            //            SisoIoImageEngine *imageHandler0 = nullptr;
+            //            IoImageOpen(currentTestFilePath.toStdString().c_str(), &imageHandler0);
+            //            unsigned short* buf = (unsigned short*)malloc((size_t)grabber->getDMALength());
+            //            memcpy(buf, (unsigned short*)IoImageGetData(imageHandler0),grabber->getDMALength());
+            //            this->grabber->convertToGrabberImage(buf);
 
             qDebug() << "Test image is sent to this grabber.";
         });
@@ -184,6 +187,10 @@ GrabberDialog::GrabberDialog(QWidget *parent) :
         QMessageBox::information(this, this->windowTitle(), "Initialization is done.");
     });
 
+    widget = new QTreeWidget;
+    widget->show();
+    //    widget->setColumnCount(2);
+    widget->setHeaderLabels(QStringList() << "Feature" << "Value");
 }
 
 GrabberDialog::~GrabberDialog()
@@ -194,6 +201,57 @@ GrabberDialog::~GrabberDialog()
 void GrabberDialog::setGrabber(Grabber *_grabber)
 {
     grabber = _grabber;
+}
+
+void GrabberDialog::widgetGenerator(QString mcfPath)
+{
+    QFile file(mcfPath);
+
+    QString sectionParser = "[";
+    QString valueParser = "=";
+
+    if(file.open(QIODevice::ReadOnly | QIODevice::Text)){
+        QTextStream in(&file);
+        QTreeWidgetItem *currentParent=nullptr;
+        while(!in.atEnd()){
+            QString line = in.readLine();
+            if(line.isEmpty()) continue;
+
+            if(line.contains(sectionParser)){
+                QTreeWidgetItem *section = new QTreeWidgetItem(widget);
+                section->setText(0, line.remove("[").remove("]"));
+                currentParent = section;
+                continue;
+            }
+            auto values = line.split(valueParser);
+
+            QTreeWidgetItem *children = new QTreeWidgetItem(currentParent);
+            children->setText(0, values.first());
+
+            QLineEdit *lineEdit = new QLineEdit(values.last().remove(";"));
+            lineEdit->setFrame(false);
+            lineEdit->setObjectName(values.first());
+
+            widget->setItemWidget(children, 1, lineEdit);
+            connect(lineEdit, &QLineEdit::editingFinished, this, [=]{
+                qDebug() << lineEdit->objectName();
+                qDebug() << this->widget->selectedItems().first()->parent()->text(0);
+                qDebug() << this->widget->selectedItems().first()->text(0);
+//                qDebug() << this->widget->findChild<QTreeWidgetmItem *>(lineEdit->objectName(), Qt::FindChildrenRecursively);
+
+//                for(auto edit : this->widget->findChildren<QTreeWidgetItem*>(lineEdit->objectName(), Qt::FindChildrenRecursively)){
+//                    qDebug() << "?"<< edit;
+//                }
+            });
+
+            qDebug() << line;
+        }
+    }
+}
+
+void GrabberDialog::generateChildrenWidgetItem(QTreeWidgetItem *parent, QString children)
+{
+
 }
 
 void GrabberDialog::updateInformation()
