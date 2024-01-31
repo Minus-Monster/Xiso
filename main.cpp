@@ -25,6 +25,8 @@ int main(int argc, char *argv[])
     Detector *d = new Detector;
     w.setDetector(d);
     // Need to send the grabber
+
+    // When push the Sequential, Continuous button
     QObject::connect(&w, &MainWindow::grabbingStart, d, [d, g](int num){
         if(num==0){
             g->continuousGrabbing();
@@ -34,11 +36,12 @@ int main(int argc, char *argv[])
             d->sequentialGrabbing(num+1);
         }
     });
+    // Stop button pressed or reset
     QObject::connect(&w, &MainWindow::grabbingFinished, d, [d, g](){
         g->stopGrabbing();
         d->stopGrabbing();
     });
-    w.showMaximized();
+    w.show();
 
     return a.exec();
 }

@@ -9,6 +9,7 @@
 #include <QMetaObject>
 #include "sisoIo.h"
 #include <QColorSpace>
+#include <QDockWidget>
 
 MainWindow::MainWindow(QWidget *parent)
     : QMainWindow(parent)
@@ -22,38 +23,70 @@ MainWindow::MainWindow(QWidget *parent)
     layout->addWidget(widget);
     ui->frame->setLayout(layout);
 
-    bcControl = new BrightContrastControl;
-    //    bcControl->show();
+    bcControl = new BrightContrastControl(this);
+    QImage *img = new QImage("C:/Users/MPark/Documents/Projects/Xiso/Dark/DarkRaw0.tiff");
+    this->widget->setImage(*img);
+    bcControl->convertImage(img);
+    connect(bcControl, &BrightContrastControl::converted, this, [this](QImage image){
+        this->widget->setImage(image);
+    });
+    connect(ui->pushButton_imageAdjustment, &QPushButton::clicked, this, [this](bool checked){
+        if(checked) this->bcControl->show();
+        else this->bcControl->hide();
+    });
+    connect(bcControl, &BrightContrastControl::finished, this, [this](bool on){
+        this->ui->pushButton_imageAdjustment->setChecked(on);
+    });
 
+    /// DEBUG CONSOLE
+    debugConsole = new QTextEdit;
+    dockwidgetDebug = new QDockWidget("Debug Console");
+    dockwidgetDebug->setWidget(debugConsole);
+    addDockWidget(Qt::DockWidgetArea::BottomDockWidgetArea,dockwidgetDebug);
+    connect(ui->actionDebug_Console, &QAction::triggered, dockwidgetDebug, &QDockWidget::setVisible);
+    dockwidgetDebug->setGeometry(0,0, 100, 50);
 
+    /// SHOWING DISPLAY CHANGING
+    connect(ui->comboBox_channel, &QComboBox::currentTextChanged, this ,[this](QString string){
+        qDebug() << string << "mode is enabled.";
+        if(string == "Grabber"){
+            disconnect(detectorConnect);
+            grabberConnect = connect(this->grabber, &Grabber::sendImage, this, [this](QImage image){
+                this->widget->setImage(image);
+                ui->statusbar->showMessage("Elapsed time : " + QString::number(timer->restart()));
+            });
+        }else{ // detector mode
+            disconnect(grabberConnect);
+            detectorConnect = connect(this->detector, &Detector::sendImage, this, [this](QImage image){
+                this->widget->setImage(image);
+                ui->statusbar->showMessage("Elapsed time : " + QString::number(timer->restart()));
+            });
+        }
+    });
+    /// MAIN PANEL
     connect(ui->actionPanel, &QAction::triggered, ui->dockWidget_panel, &QDockWidget::setVisible);
-    connect(ui->actionDebug_Console, &QAction::triggered, ui->dockWidget_debug, &QDockWidget::setVisible);
-    connect(ui->actionDetector_Settings, &QAction::triggered, ui->dockWidget_detector, &QDockWidget::setVisible);
-    connect(ui->actionGrabber_Settings, &QAction::triggered, ui->dockWidget_grabber, &QDockWidget::setVisible);
-    // Sequential grabbing
+    /// GRABBER AND DETECTOR SEQUENTIAL GRABBING
     connect(ui->pushButton_Sequential, &QPushButton::clicked, this, [this](){
         int cnt = ui->spinBox_Sequential->value();
         this->detector->setExposureMode(SpectrumLogic::ExposureModes::seq_mode);
         timer->start();
         emit grabbingStart(cnt);
-
         //                this->grabber->continuousGrabbing();
         //                QImage *img = new QImage("C:/Users/minwoo/Desktop/Minu/CalTest/Test_Raw.tiff");
         //                this->grabber->convertToGrabberImage((unsigned short*)img->bits());
-
     });
-    // Continuous grabbing
+    /// GRABBER AND DETECTOR CONTINUOUS GRABBING
     connect(ui->pushButton_Continuous, &QPushButton::clicked, this, [this](bool on){
         if(on) emit grabbingStart();
         else emit grabbingFinished();
         timer->start();
     });
-    // Reset
+    /// GRABBER AND DETECTOR STOP GRABBING
     connect(ui->pushButton_reset, &QPushButton::clicked, this, [this](){
         emit grabbingFinished();
         timer->elapsed();
     });
-    // Dark calib
+    /// DARK CALIBRATION MODE
     connect(ui->pushButton_dark, &QPushButton::clicked, this, [this](){
         QString path = QFileDialog::getExistingDirectory(this, "Select a directory to save", QDir::homePath());
         if(path.isEmpty()) return;
@@ -62,13 +95,13 @@ MainWindow::MainWindow(QWidget *parent)
         detector->setSaveMode(true);
         detector->setSavingPath(path + "/DarkRaw");
         detector->sequentialGrabbing(ui->spinBox_calibCount->value());
-
+        /// I'm not sure if it is fixed that the detector doesn't stop capturing after this function;
+        /// When executing another calib(eg,. bright cal), you may need to push the stop grabbing button first (It is a known bug)
+        detector->setSaveMode(false); // need to revise this code. threading error.
         //        detector->saveImages(ui->spinBox_calibCount->value());
         // need to capture X frames and save that frames in the specific folder.
-
-        //        detector->setSaveMode(false); // need to revise this code. threading error.
     });
-    // bright calib
+    /// BRIGHT CALIBRATION MODE
     connect(ui->pushButton_bright, &QPushButton::clicked, this, [this](){
         QString path = QFileDialog::getExistingDirectory(this, "Select a directory to save", QDir::homePath());
         if(path == "") return;
@@ -78,12 +111,13 @@ MainWindow::MainWindow(QWidget *parent)
         detector->setSaveMode(true);
         detector->setSavingPath(path + "/WhiteRaw");
         detector->sequentialGrabbing(ui->spinBox_calibCount->value());
+        detector->setSaveMode(false);
 
     });
-    // calib out
+    /// AVERAGING DARK AND BRIGHT CALIBRATION
     connect(ui->pushButton_out, &QPushButton::clicked, this, [this](){
-        darkCalPath = "C:/Users/MPark/Documents/Projects/Xiso/Dark";
-        brightCalPath = "C:/Users/MPark/Documents/Projects/Xiso/Bright";
+        //        darkCalPath = "C:/Users/MPark/Documents/Projects/Xiso/Dark";
+        //        brightCalPath = "C:/Users/MPark/Documents/Projects/Xiso/Bright";
 
         if(darkCalPath == "" || brightCalPath ==  ""){
             qDebug() << "Cal path is not set";
@@ -102,13 +136,12 @@ MainWindow::MainWindow(QWidget *parent)
             }
         }
 
-
         QString darkFileName = darkCalPath+"/DcalAvg";
         if(!this->averagedImage(darkFileName, darkCalPath, darkList)){
             qDebug() << "Dark calibration isn't generated.";
             return;
         }
-        QString brightFileName = brightCalPath+"/WcalAvg.tiff";
+        QString brightFileName = brightCalPath+"/WcalAvg";
         if(!this->averagedImage(brightFileName, brightCalPath, brightList)){
             qDebug() << "Bright calibration isn't generated.";
             return;
@@ -120,33 +153,13 @@ MainWindow::MainWindow(QWidget *parent)
         QMessageBox::information(this, "Xiso", "Lookup table is done.");
 
     });
-    // channel changes.
-    connect(ui->comboBox_channel, &QComboBox::currentTextChanged, this ,[this](QString string){
-        qDebug() << string << "mode is enabled.";
-        if(string == "Grabber"){
-            disconnect(detectorConnect);
-            grabberConnect = connect(this->grabber, &Grabber::sendImage, this, [this](QImage image){
-                this->widget->setImage(image);
-                ui->statusbar->showMessage("Elapsed time : " + QString::number(timer->restart()));
-            });
-        }else{ // detector mode
-            disconnect(grabberConnect);
-            detectorConnect = connect(this->detector, &Detector::sendImage, this, [this](QImage image){
-                this->widget->setImage(image);
-                ui->statusbar->showMessage("Elapsed time : " + QString::number(timer->restart()));
-            });
-        }
-    });
-    // ROI set-up
+    /// ROI set-up
     connect(ui->pushButton_roiApply, &QPushButton::clicked, this, [this](){
         this->setROI();
     });
-
-
 }
 
-MainWindow::~MainWindow()
-{
+MainWindow::~MainWindow(){
     delete ui;
 }
 
@@ -155,7 +168,14 @@ MainWindow::~MainWindow()
 void MainWindow::setGrabber(Grabber *c)
 {
     grabber = c;
-    ui->formLayout_grabber->addRow(grabber->getDialog());
+
+    dockwidgetGrabber = new QDockWidget("Grabber Configuration");
+    dockwidgetGrabber->setWidget(grabber->getDialog());
+    this->addDockWidget(Qt::DockWidgetArea::RightDockWidgetArea, dockwidgetGrabber);
+    dockwidgetGrabber->setVisible(false);
+
+    connect(ui->actionGrabber_Settings, &QAction::triggered, dockwidgetGrabber, &QDockWidget::setVisible);
+    connect(dockwidgetGrabber, &QDockWidget::visibilityChanged, ui->actionGrabber_Settings, &QAction::setChecked);
     // Default Grabber
     //    grabberConnect = connect(this->grabber, &Grabber::sendImage, this, [this](QImage image){
     //        auto gen = bcControl->convertImage(&image);
@@ -164,14 +184,19 @@ void MainWindow::setGrabber(Grabber *c)
     //        //        qDebug() << "try to save images" << image.save("C:/Users/User/Desktop/tmpMinu/test.tiff");
     //        ui->statusbar->showMessage("Elapsed time : " + QString::number(timer->restart()));
     //    });
-
 }
 /// DETECTOR PART BEGINS ///
 void MainWindow::setDetector(Detector *d)
 {
     detector = d;
-    ui->formLayout_detector->addRow(detector->getDialog());
-    connect(d, &Detector::sendBuffer, this->grabber, &Grabber::convertToGrabberImage);
+    connect(detector, &Detector::sendBuffer, this->grabber, &Grabber::convertToGrabberImage);
+
+    dockwidgetDetector = new QDockWidget("Detector Configuration");
+    dockwidgetDetector->setWidget(detector->getDialog());
+    this->addDockWidget(Qt::DockWidgetArea::LeftDockWidgetArea, dockwidgetDetector);
+    dockwidgetDetector->setVisible(false);
+    connect(ui->actionDetector_Settings, &QAction::triggered, dockwidgetDetector, &QDockWidget::setVisible);
+    connect(dockwidgetDetector, &QDockWidget::visibilityChanged, ui->actionDetector_Settings, &QAction::setChecked);
 
     disconnect(grabberConnect);
     detectorConnect = connect(this->detector, &Detector::sendImage, this, [this](QImage image){
@@ -182,7 +207,7 @@ void MainWindow::setDetector(Detector *d)
 
 void MainWindow::setMessage(QString message)
 {
-    ui->textEdit->append(message);
+    debugConsole->append(message);
 }
 
 void MainWindow::setROI()
@@ -197,10 +222,7 @@ void MainWindow::setROI()
     this->grabber->setImageWidth(width);
     this->grabber->setImageHeight(height);
 
-    this->detector->setX(x);
-    this->detector->setY(y);
-    this->detector->setWidth(width);
-    this->detector->setHeight(height);
+    qDebug() << (this->detector->setROI(width, height,x,y) ? "Completely set values of the detector": "Failed to set values of the detector");
 }
 
 bool MainWindow::averagedImage(QString avgFileName, QString dirPath, QStringList fileNameList)
@@ -223,7 +245,7 @@ bool MainWindow::averagedImage(QString avgFileName, QString dirPath, QStringList
     }
     QImage tmp = QImage(dirPath + "/" + fileNameList.first());
     if(tmp.isNull()){
-        qDebug() << "File is empty." << avgFileName << "Would be not made.";
+        qDebug() << "File is empty." << avgFileName << "Wouldn't be made.";
         return false;
     }
     int bytePerPixel = 2; // 16 bit -> 2 , 8 bit -> 1
@@ -256,7 +278,6 @@ bool MainWindow::averagedImage(QString avgFileName, QString dirPath, QStringList
         qDebug() << "TIFF Writing error: average-" << Fg_getErrorDescription(this->grabber->getFg(), error) << "Upper-" << Fg_getErrorDescription(this->grabber->getFg(), errorUp) << "Lower-" << Fg_getErrorDescription(this->grabber->getFg(), errorLow);
         return false;
     }
-
     return true;
 }
 

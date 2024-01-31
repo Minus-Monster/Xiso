@@ -3,13 +3,13 @@
 
 #include <QMainWindow>
 #include <QElapsedTimer>
+#include <QTextEdit>
 #include "GraphicsWidget.h"
 //#include "Modules/DebugConsole.h"
 
 #include "Detector.h"
 #include "Grabber.h"
 #include "BrightContrastControl.h"
-
 QT_BEGIN_NAMESPACE
 namespace Ui { class MainWindow; }
 QT_END_NAMESPACE
@@ -42,17 +42,20 @@ signals:
 private:
     Ui::MainWindow *ui;
     Qylon::GraphicsWidget *widget;
-//    Qylon::DebugConsole *console;
     QVBoxLayout *layout;
     Grabber *grabber;
     Detector *detector;
     QElapsedTimer *timer;
     QString darkCalPath="";
     QString brightCalPath="";
-    uint8_t* cal_Data0 = NULL;
-    uint8_t* cal_Data1 = NULL;
-    uint8_t* cal_Data2 = NULL;
-    uint8_t* cal_Data3 = NULL;
+
+    QDockWidget *dockwidgetDebug;
+    QTextEdit *debugConsole;
+
+    QDockWidget *dockwidgetDetector;
+
+    QDockWidget *dockwidgetGrabber;
+
 
     QMetaObject::Connection grabberConnect;
     QMetaObject::Connection detectorConnect;

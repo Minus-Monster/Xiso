@@ -22,7 +22,7 @@ GrabberDialog::GrabberDialog(QWidget *parent) :
         auto config = QFileDialog::getOpenFileName(this, "Basler Framegrabber Settings", QDir::currentPath(), "*.mcf");
         if(config.isEmpty()) return;
         else ui->lineEdit_config->setText(config);
-        widgetGenerator(config);
+//        widgetGenerator(config);
     });
 
     connect(ui->pushButton_initialization, &QPushButton::clicked, this, [this](){
@@ -187,10 +187,11 @@ GrabberDialog::GrabberDialog(QWidget *parent) :
         QMessageBox::information(this, this->windowTitle(), "Initialization is done.");
     });
 
+    /*
     widget = new QTreeWidget;
     widget->show();
-    //    widget->setColumnCount(2);
     widget->setHeaderLabels(QStringList() << "Feature" << "Value");
+    */
 }
 
 GrabberDialog::~GrabberDialog()

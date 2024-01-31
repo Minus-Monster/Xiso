@@ -61,6 +61,7 @@ void callBackLive(SpectrumLogic::ushort *pImg, int *pWidth, int *pHeight, Spectr
     else if(*pFrameCount == loopCnt){
         qDebug() << "Sequential grabbing finished.";
         instance->stopGrabbing();
+        instance->setSaveMode(false);
         return;
     }
 }
